@@ -4,6 +4,7 @@ import '../widgets/input_bar.dart';
 import '../widgets/scroll_tabs.dart';
 import '../models/message.dart';
 import '../services/storage_service.dart';
+import 'dart:ui';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -82,23 +83,75 @@ class _ChatScreenState extends State<ChatScreen> {
       category: _currentCategory,
     );
 
-    // Сохраняем сообщение в файл
     await _storage.saveMessage(message);
 
     setState(() {
-      _messagesByCategory[_currentCategory]!.insert(0, message);
+      _messagesByCategory[_currentCategory]!
+          .add(message); // Используем add вместо insert
     });
 
     _textController.clear();
 
-    // Прокрутка к началу списка (так как новые сообщения добавляются сверху)
     final controller = _scrollControllers[_currentCategory];
     if (controller?.hasClients ?? false) {
       controller!.animateTo(
-        0,
+        controller.position.maxScrollExtent +
+            100, // +100 для гарантии прокрутки до конца
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  Future<void> _moveMessage(
+      Message message, MessageCategory newCategory) async {
+    setState(() {
+      _messagesByCategory[message.category]!.remove(message);
+    });
+
+    try {
+      await _storage.moveMessage(message, newCategory);
+
+      final newMessage = Message(
+        text: message.text,
+        isMe: message.isMe,
+        timestamp: message.timestamp,
+        category: newCategory,
+      );
+
+      setState(() {
+        _messagesByCategory[newCategory]!.insert(0, newMessage);
+      });
+    } catch (e) {
+      setState(() {
+        _messagesByCategory[message.category]!.add(message);
+      });
+
+      if (mounted) {
+        // Добавляем проверку
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось переместить сообщение')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteMessage(Message message) async {
+    setState(() {
+      _messagesByCategory[message.category]!.remove(message);
+    });
+
+    try {
+      await _storage.deleteMessage(message);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messagesByCategory[message.category]!.add(message);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось удалить сообщение')),
+        );
+      }
     }
   }
 
@@ -144,7 +197,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _selectedTabIndex = index;
     });
 
-    // Анимируем только если разница в один таб
     if ((index - currentIndex).abs() == 1) {
       _pageController.animateToPage(
         index,
@@ -162,7 +214,6 @@ class _ChatScreenState extends State<ChatScreen> {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollEndNotification) {
-          // Начинаем подгрузку когда доскроллили до 80% списка
           if (notification.metrics.pixels >=
               notification.metrics.maxScrollExtent * 0.8) {
             _loadMoreMessages(category);
@@ -174,10 +225,8 @@ class _ChatScreenState extends State<ChatScreen> {
         key: PageStorageKey(category),
         controller: _scrollControllers[category],
         padding: const EdgeInsets.all(16),
-        // Добавляем +1 к количеству элементов если идет загрузка
         itemCount: messages.length + (_isLoading[category]! ? 1 : 0),
         itemBuilder: (context, index) {
-          // Показываем индикатор загрузки последним элементом
           if (index == messages.length) {
             return const Center(
               child: Padding(
@@ -186,7 +235,11 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             );
           }
-          return MessageBubble(message: messages[index]);
+          return MessageBubble(
+            message: messages[index],
+            onMove: (newCategory) => _moveMessage(messages[index], newCategory),
+            onDelete: () => _deleteMessage(messages[index]),
+          );
         },
       ),
     );

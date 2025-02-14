@@ -56,7 +56,7 @@ ${message.text}
         .toList();
 
     // Сортируем файлы по имени (timestamp) в обратном порядке
-    files.sort((a, b) => b.path.compareTo(a.path));
+    files.sort((a, b) => a.path.compareTo(b.path));
 
     // Применяем пагинацию
     if (before != null) {
@@ -82,6 +82,37 @@ ${message.text}
     }
 
     return messages;
+  }
+
+  Future<void> moveMessage(Message message, MessageCategory newCategory) async {
+    final oldDir = await _getCategoryDir(message.category);
+    final newDir = await _getCategoryDir(newCategory);
+
+    final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
+    final oldFile = File(path.join(oldDir.path, fileName));
+    // Убираем неиспользуемую переменную newFile
+
+    // Создаем новое сообщение с обновленной категорией
+    final newMessage = Message(
+      text: message.text,
+      isMe: message.isMe,
+      timestamp: message.timestamp,
+      category: newCategory,
+    );
+
+    // Сохраняем новое сообщение и удаляем старое
+    await saveMessage(newMessage);
+    await oldFile.delete();
+  }
+
+  Future<void> deleteMessage(Message message) async {
+    final categoryDir = await _getCategoryDir(message.category);
+    final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
+    final file = File(path.join(categoryDir.path, fileName));
+
+    if (await file.exists()) {
+      await file.delete();
+    }
   }
 
   Message _parseMessageFromMd(String content, MessageCategory category) {
