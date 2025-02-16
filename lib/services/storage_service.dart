@@ -86,7 +86,6 @@ ${message.text}
 
   Future<void> moveMessage(Message message, MessageCategory newCategory) async {
     final oldDir = await _getCategoryDir(message.category);
-    final newDir = await _getCategoryDir(newCategory);
 
     final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
     final oldFile = File(path.join(oldDir.path, fileName));
