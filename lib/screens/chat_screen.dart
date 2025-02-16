@@ -134,6 +134,13 @@ class _ChatScreenState extends State<ChatScreen>
         }),
       ),
       onDrawerChanged: (isOpened) {
+        if (isOpened) {
+          // Отложено снимаем фокус после открытия drawer
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          });
+        }
+
         if (!isOpened && _tabManager.pendingTabIndex != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             setState(() {
@@ -159,18 +166,22 @@ class _ChatScreenState extends State<ChatScreen>
               }),
             ),
             Expanded(
-              child: PageView.builder(
-                controller: _tabManager.pageController,
-                itemCount: MessageCategory.values.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    _tabManager.selectedTabIndex = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final category = MessageCategory.values[index];
-                  return _buildMessageList(category);
-                },
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                behavior: HitTestBehavior.translucent,
+                child: PageView.builder(
+                  controller: _tabManager.pageController,
+                  itemCount: MessageCategory.values.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _tabManager.selectedTabIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final category = MessageCategory.values[index];
+                    return _buildMessageList(category);
+                  },
+                ),
               ),
             ),
             InputBar(
