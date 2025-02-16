@@ -31,13 +31,7 @@ class _ChatScreenState extends State<ChatScreen>
     super.initState();
     _messageManager = MessageManager(StorageService());
     _tabManager = TabManager(
-      pageController: CustomPageController(
-        onSwipeToOpenDrawer: () {
-          if (mounted) {
-            Scaffold.of(context).openDrawer();
-          }
-        },
-      ),
+      pageController: CustomPageController(),
     );
 
     _messageManager.initialize();
@@ -87,7 +81,6 @@ class _ChatScreenState extends State<ChatScreen>
         reverse: true,
         padding: const EdgeInsets.all(16),
         shrinkWrap: true,
-        physics: const AlwaysScrollableScrollPhysics(),
         clipBehavior: Clip.none,
         itemCount:
             messages.length + (_messageManager.isLoading[category]! ? 1 : 0),
@@ -175,9 +168,6 @@ class _ChatScreenState extends State<ChatScreen>
               ),
               Expanded(
                 child: PageView.builder(
-                  physics: _tabManager.selectedTabIndex == 0
-                      ? const PageScrollPhysics()
-                      : const AlwaysScrollableScrollPhysics(),
                   controller: _tabManager.pageController,
                   itemCount: MessageCategory.values.length,
                   onPageChanged: (index) {

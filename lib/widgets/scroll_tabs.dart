@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class ScrollTabs extends StatefulWidget {
   final List<String> tabs;
@@ -99,20 +100,26 @@ class _ScrollTabsState extends State<ScrollTabs> {
                       ),
                       decoration: BoxDecoration(
                         color: Color.lerp(
-                          Colors.grey[200],
-                          Theme.of(context).primaryColor,
-                          value,
-                        ),
+                              AppColors.getPrimaryBackground(context),
+                              AppColors.getSecondaryBackground(context),
+                              value,
+                            ) ??
+                            AppColors.getPrimaryBackground(context),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Color.lerp(
+                                AppColors.getDividedColor(context),
+                                AppColors.getTertiaryBackground(context),
+                                value,
+                              ) ??
+                              AppColors.getDividedColor(context),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         widget.tabs[index],
                         style: TextStyle(
-                          color: Color.lerp(
-                            Colors.black,
-                            Colors.white,
-                            value,
-                          ),
+                          color: AppColors.getPrimaryText(context),
                           fontWeight: FontWeight.lerp(
                             FontWeight.normal,
                             FontWeight.bold,
