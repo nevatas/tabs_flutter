@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CustomPageController extends PageController {
+  bool _isUserGesture = false;
+
   CustomPageController({
     int initialPage = 0,
     bool keepPage = true,
@@ -16,7 +18,7 @@ class CustomPageController extends PageController {
     required Duration duration,
     required Curve curve,
   }) async {
-    // Мгновенно перемещаемся к целевой странице без анимации
+    _isUserGesture = false;
     super.jumpToPage(page);
   }
 
@@ -26,11 +28,24 @@ class CustomPageController extends PageController {
     required Duration duration,
     required Curve curve,
   }) {
-    // Используем стандартную анимацию для соседних страниц
+    _isUserGesture = false;
     return super.animateToPage(
       page,
       duration: duration,
       curve: curve,
     );
   }
+
+  // Переопределяем метод для отслеживания пользовательских жестов
+  @override
+  bool get hasClients => super.hasClients;
+
+  @override
+  double get page => super.page ?? 0.0;
+
+  void startUserGesture() {
+    _isUserGesture = true;
+  }
+
+  bool get isUserGesture => _isUserGesture;
 }

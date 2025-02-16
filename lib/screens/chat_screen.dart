@@ -162,8 +162,11 @@ class _ChatScreenState extends State<ChatScreen>
               child: PageView.builder(
                 controller: _tabManager.pageController,
                 itemCount: MessageCategory.values.length,
-                pageSnapping: false,
-                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _tabManager.selectedTabIndex = index;
+                  });
+                },
                 itemBuilder: (context, index) {
                   final category = MessageCategory.values[index];
                   return _buildMessageList(category);
