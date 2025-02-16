@@ -1,5 +1,6 @@
 // widgets/side_menu.dart
 import 'package:flutter/material.dart';
+import 'side_menu_tab.dart';
 
 class SideMenu extends StatelessWidget {
   final List<String> tabs;
@@ -25,32 +26,15 @@ class SideMenu extends StatelessWidget {
           children: [
             ...List.generate(
               tabs.length,
-              (index) {
-                final isSelected = index == selectedIndex;
-                return ListTile(
-                  leading: Container(
-                    alignment: Alignment.center,
-                    width: 40,
-                    child: Text(
-                      _getEmojiForTab(index),
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                  title: Text(
-                    tabs[index],
-                    style: TextStyle(
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? Theme.of(context).primaryColor : null,
-                    ),
-                  ),
-                  selected: isSelected,
-                  onTap: () {
-                    onTabSelected(index);
-                    Navigator.pop(context);
-                  },
-                );
-              },
+              (index) => SideMenuTab(
+                title: tabs[index],
+                emoji: _getEmojiForTab(index),
+                isSelected: index == selectedIndex,
+                onTap: () {
+                  onTabSelected(index);
+                  Navigator.pop(context);
+                },
+              ),
             ),
             const SizedBox(height: 8),
           ],

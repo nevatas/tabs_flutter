@@ -29,8 +29,14 @@ class MessageManager {
   }
 
   Future<void> sendMessage(Message message) async {
-    await _storage.saveMessage(message);
     messagesByCategory[message.category]!.add(message);
+
+    try {
+      await _storage.saveMessage(message);
+    } catch (e) {
+      messagesByCategory[message.category]!.removeLast();
+      rethrow;
+    }
   }
 
   Future<void> moveMessage(Message message, MessageCategory newCategory) async {

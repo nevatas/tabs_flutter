@@ -44,16 +44,17 @@ class _ChatScreenState extends State<ChatScreen>
       category: _tabManager.currentCategory,
     );
 
-    setState(() {
-      _messageManager.sendMessage(message);
-    });
-
+    final messageText = _textController.text;
     _textController.clear();
+
+    await _messageManager.sendMessage(message);
+
+    setState(() {});
 
     final controller =
         _tabManager.scrollControllers[_tabManager.currentCategory];
     if (controller?.hasClients ?? false) {
-      controller!.animateTo(
+      await controller!.animateTo(
         controller.position.maxScrollExtent + 100,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
