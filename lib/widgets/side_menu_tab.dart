@@ -28,8 +28,10 @@ class SideMenuTab extends StatelessWidget {
       title: Text(
         title,
         style: TextStyle(
+          fontSize: 16,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           color: isSelected ? Theme.of(context).primaryColor : null,
+          letterSpacing: -0.2,
         ),
       ),
       selected: isSelected,

@@ -1,55 +1,196 @@
 import 'package:flutter/material.dart';
 
-class InputBar extends StatelessWidget {
+import '../theme/app_colors.dart';
+
+class InputBar extends StatefulWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
+
   final VoidCallback onSendPressed;
+
   final VoidCallback onAttachPressed;
+
   final String hintText;
 
   const InputBar({
     super.key,
     required this.controller,
+    required this.focusNode,
     required this.onSendPressed,
     required this.onAttachPressed,
-    this.hintText = 'Введите сообщение...',
+    required this.hintText,
   });
+
+  @override
+  State<InputBar> createState() => _InputBarState();
+}
+
+class _InputBarState extends State<InputBar> {
+  bool get isTextEmpty => widget.controller.text.trim().isEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            offset: const Offset(0, -1),
-            blurRadius: 10,
-            color: Colors.black.withAlpha(26),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: AppColors.getPrimaryBackground(context),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSecondaryBackground(context),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppColors.getTertiaryBackground(context),
+            width: 1,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.attach_file),
-              onPressed: onAttachPressed,
-            ),
-            Expanded(
+            // TextField с поддержкой мультистрок
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  border: InputBorder.none,
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                maxLines: 5,
+                minLines: 1,
+                style: TextStyle(
+                  color: AppColors.getPrimaryText(context),
+                  letterSpacing: -0.2,
                 ),
-                onSubmitted: (_) => onSendPressed(),
+                decoration: InputDecoration(
+                  hintText: widget.hintText,
+                  hintStyle: TextStyle(
+                    color: AppColors.getSecondaryText(context),
+                    letterSpacing: -0.2,
+                  ),
+                  isDense: true,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => widget.onSendPressed(),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: onSendPressed,
+
+            // Нижняя панель с кнопками
+
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  // Кнопка прикрепления
+
+                  _AttachButton(
+                    onPressed: widget.onAttachPressed,
+                  ),
+
+                  const Spacer(),
+
+                  // Кнопка отправки
+
+                  _SendButton(
+                    onPressed: widget.onSendPressed,
+                    isEnabled: !isTextEmpty,
+                  ),
+                ],
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AttachButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _AttachButton({
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.getTertiaryBackground(context),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.16),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.add,
+            size: 20,
+            color: AppColors.getPrimaryText(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SendButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  final bool isEnabled;
+
+  const _SendButton({
+    required this.onPressed,
+    required this.isEnabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isEnabled ? onPressed : null,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? AppColors.getAccentBackground(context)
+                : AppColors.getSecondaryText(context),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            Icons.arrow_upward,
+            size: 16,
+            color: AppColors.getAccentText(context),
+          ),
         ),
       ),
     );

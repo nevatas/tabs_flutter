@@ -24,6 +24,7 @@ class Header extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              letterSpacing: -0.2,
             ),
           ),
           IconButton(

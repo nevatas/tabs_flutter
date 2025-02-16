@@ -61,19 +61,4 @@ class TabManager {
       controller.dispose();
     }
   }
-
-  String getHintTextForCategory(MessageCategory category) {
-    switch (category) {
-      case MessageCategory.inbox:
-        return 'Введите сообщение...';
-      case MessageCategory.books:
-        return 'Добавьте заметку о книге...';
-      case MessageCategory.ideas:
-        return 'Запишите свою идею...';
-      case MessageCategory.words:
-        return 'Добавьте новое слово...';
-      case MessageCategory.quotes:
-        return 'Введите цитату...';
-    }
-  }
 }

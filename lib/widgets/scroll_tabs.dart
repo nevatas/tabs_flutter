@@ -118,6 +118,7 @@ class _ScrollTabsState extends State<ScrollTabs> {
                             FontWeight.bold,
                             value,
                           ),
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ),

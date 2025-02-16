@@ -9,6 +9,8 @@ import '../services/storage_service.dart';
 import '../managers/message_manager.dart';
 import '../managers/tab_manager.dart';
 import '../controllers/custom_page_controller.dart';
+import '../theme/app_colors.dart';
+import 'package:flutter/rendering.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -22,13 +24,20 @@ class _ChatScreenState extends State<ChatScreen>
   late final MessageManager _messageManager;
   late final TabManager _tabManager;
   final _textController = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _messageManager = MessageManager(StorageService());
     _tabManager = TabManager(
-      pageController: CustomPageController(),
+      pageController: CustomPageController(
+        onSwipeToOpenDrawer: () {
+          if (mounted) {
+            Scaffold.of(context).openDrawer();
+          }
+        },
+      ),
     );
 
     _messageManager.initialize();
@@ -131,51 +140,44 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      drawer: SideMenu(
-        tabs: _tabManager.tabs,
-        selectedIndex: _tabManager.selectedTabIndex,
-        onTabSelected: (index) => setState(() {
-          _tabManager.handleTabSelection(index, fromDrawer: true);
-        }),
-      ),
-      onDrawerChanged: (isOpened) {
-        if (isOpened) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            FocusManager.instance.primaryFocus?.unfocus();
-          });
-        }
-
-        if (!isOpened && _tabManager.pendingTabIndex != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              _tabManager.handleTabSelection(_tabManager.pendingTabIndex!);
-              _tabManager.pendingTabIndex = null;
-            });
-          });
-        }
-      },
-      body: SafeArea(
-        child: Column(
-          children: [
-            Builder(
-              builder: (context) => Header(
-                onMenuPressed: () => Scaffold.of(context).openDrawer(),
+    return GestureDetector(
+      onTap: () => _focusNode.unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: AppColors.getPrimaryBackground(context),
+        drawer: SideMenu(
+          tabs: _tabManager.tabs,
+          selectedIndex: _tabManager.selectedTabIndex,
+          onTabSelected: (index) => setState(() {
+            _tabManager.handleTabSelection(index, fromDrawer: true);
+          }),
+        ),
+        drawerEdgeDragWidth: _tabManager.selectedTabIndex == 0
+            ? MediaQuery.of(context).size.width
+            : null,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Builder(
+                builder: (context) => Header(
+                  onMenuPressed: () {
+                    _focusNode.unfocus();
+                    Scaffold.of(context).openDrawer();
+                  },
+                ),
               ),
-            ),
-            ScrollTabs(
-              tabs: _tabManager.tabs,
-              selectedIndex: _tabManager.selectedTabIndex,
-              onTabSelected: (index) => setState(() {
-                _tabManager.handleTabSelection(index);
-              }),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => FocusScope.of(context).unfocus(),
-                behavior: HitTestBehavior.translucent,
+              ScrollTabs(
+                tabs: _tabManager.tabs,
+                selectedIndex: _tabManager.selectedTabIndex,
+                onTabSelected: (index) => setState(() {
+                  _tabManager.handleTabSelection(index);
+                }),
+              ),
+              Expanded(
                 child: PageView.builder(
+                  physics: _tabManager.selectedTabIndex == 0
+                      ? const PageScrollPhysics()
+                      : const AlwaysScrollableScrollPhysics(),
                   controller: _tabManager.pageController,
                   itemCount: MessageCategory.values.length,
                   onPageChanged: (index) {
@@ -189,15 +191,15 @@ class _ChatScreenState extends State<ChatScreen>
                   },
                 ),
               ),
-            ),
-            InputBar(
-              controller: _textController,
-              onSendPressed: _sendMessage,
-              onAttachPressed: () {},
-              hintText: _tabManager
-                  .getHintTextForCategory(_tabManager.currentCategory),
-            ),
-          ],
+              InputBar(
+                controller: _textController,
+                focusNode: _focusNode,
+                onSendPressed: _sendMessage,
+                onAttachPressed: () {},
+                hintText: 'Новая заметка...',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -205,6 +207,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _textController.dispose();
     _tabManager.dispose();
     super.dispose();

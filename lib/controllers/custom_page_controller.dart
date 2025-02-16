@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class CustomPageController extends PageController {
   bool _isUserGesture = false;
+  final VoidCallback? onSwipeToOpenDrawer;
 
   CustomPageController({
     int initialPage = 0,
     bool keepPage = true,
     double viewportFraction = 1.0,
+    this.onSwipeToOpenDrawer,
   }) : super(
           initialPage: initialPage,
           keepPage: keepPage,
