@@ -92,12 +92,25 @@ class _InputBarState extends State<InputBar> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.getPrimaryBackground(context),
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: 8,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.getPrimaryBackground(context),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.getPrimaryBackground(context).withOpacity(1.0),
+            blurRadius: 48,
+            spreadRadius: 24,
+          ),
+        ],
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSecondaryBackground(context),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.getTertiaryBackground(context),
             width: 1,
@@ -109,7 +122,7 @@ class _InputBarState extends State<InputBar> {
             // TextField с поддержкой мультистрок
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: TextField(
                 controller: widget.controller,
                 focusNode: widget.focusNode,

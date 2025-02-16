@@ -69,79 +69,96 @@ class _ScrollTabsState extends State<ScrollTabs> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: List.generate(
-            widget.tabs.length,
-            (index) => Padding(
-              key: _tabKeys[index],
-              padding: EdgeInsets.only(
-                left: index == 0 ? 16.0 : 4.0,
-                right: index == widget.tabs.length - 1 ? 16.0 : 4.0,
-              ),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(
-                  begin: 0.0,
-                  end: widget.selectedIndex == index ? 1.0 : 0.0,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getPrimaryBackground(context),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.getPrimaryBackground(context),
+            blurRadius: 16,
+            spreadRadius: 8,
+          ),
+          BoxShadow(
+            color: AppColors.getPrimaryBackground(context),
+            blurRadius: 16,
+            spreadRadius: 8,
+          ),
+        ],
+      ),
+      child: Container(
+        color: AppColors.getPrimaryBackground(context),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: List.generate(
+              widget.tabs.length,
+              (index) => Padding(
+                key: _tabKeys[index],
+                padding: EdgeInsets.only(
+                  left: index == 0 ? 16.0 : 4.0,
+                  right: index == widget.tabs.length - 1 ? 16.0 : 4.0,
                 ),
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                builder: (context, value, child) {
-                  return GestureDetector(
-                    onTap: () => widget.onTabSelected(index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color.lerp(
-                              AppColors.getPrimaryBackground(context),
-                              AppColors.getSecondaryBackground(context),
-                              value,
-                            ) ??
-                            AppColors.getPrimaryBackground(context),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(
+                    begin: 0.0,
+                    end: widget.selectedIndex == index ? 1.0 : 0.0,
+                  ),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    return GestureDetector(
+                      onTap: () => widget.onTabSelected(index),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
                           color: Color.lerp(
-                                AppColors.getDividedColor(context),
-                                AppColors.getTertiaryBackground(context),
+                                AppColors.getPrimaryBackground(context),
+                                AppColors.getSecondaryBackground(context),
                                 value,
                               ) ??
-                              AppColors.getDividedColor(context),
-                          width: 1,
+                              AppColors.getPrimaryBackground(context),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Color.lerp(
+                                  AppColors.getDividedColor(context),
+                                  AppColors.getTertiaryBackground(context),
+                                  value,
+                                ) ??
+                                AppColors.getDividedColor(context),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.tabs[index].emoji,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.tabs[index].title,
+                              style: TextStyle(
+                                color: AppColors.getPrimaryText(context),
+                                fontWeight: FontWeight.lerp(
+                                  FontWeight.normal,
+                                  FontWeight.bold,
+                                  value,
+                                ),
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.tabs[index].emoji,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.tabs[index].title,
-                            style: TextStyle(
-                              color: AppColors.getPrimaryText(context),
-                              fontWeight: FontWeight.lerp(
-                                FontWeight.normal,
-                                FontWeight.bold,
-                                value,
-                              ),
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),

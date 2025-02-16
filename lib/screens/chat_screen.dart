@@ -171,27 +171,36 @@ class _ChatScreenState extends State<ChatScreen>
                     },
                   ),
                 ),
-                if (!_messageManager.isSelectionMode)
-                  ScrollTabs(
-                    tabs: _tabManager.tabs,
-                    selectedIndex: _tabManager.selectedTabIndex,
-                    onTabSelected: (index) => setState(() {
-                      _tabManager.handleTabSelection(index);
-                    }),
-                  ),
                 Expanded(
-                  child: PageView.builder(
-                    controller: _tabManager.pageController,
-                    itemCount: MessageCategory.values.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _tabManager.selectedTabIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final category = MessageCategory.values[index];
-                      return _buildMessageList(category);
-                    },
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                        controller: _tabManager.pageController,
+                        itemCount: MessageCategory.values.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _tabManager.selectedTabIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final category = MessageCategory.values[index];
+                          return _buildMessageList(category);
+                        },
+                      ),
+                      if (!_messageManager.isSelectionMode)
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: ScrollTabs(
+                            tabs: _tabManager.tabs,
+                            selectedIndex: _tabManager.selectedTabIndex,
+                            onTabSelected: (index) => setState(() {
+                              _tabManager.handleTabSelection(index);
+                            }),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 InputBar(
