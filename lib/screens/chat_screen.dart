@@ -102,6 +102,20 @@ class _ChatScreenState extends State<ChatScreen>
 
           return MessageBubble(
             message: messages[messageIndex],
+            isSelectionMode: _messageManager.isSelectionMode,
+            isSelected: _messageManager.selectedMessages
+                .contains(messages[messageIndex]),
+            onLongPress: () {
+              setState(() {
+                _messageManager.toggleSelectionMode();
+                _messageManager.toggleMessageSelection(messages[messageIndex]);
+              });
+            },
+            onSelect: () {
+              setState(() {
+                _messageManager.toggleMessageSelection(messages[messageIndex]);
+              });
+            },
           );
         },
       ),
@@ -149,15 +163,22 @@ class _ChatScreenState extends State<ChatScreen>
                       _focusNode.unfocus();
                       Scaffold.of(context).openDrawer();
                     },
+                    isSelectionMode: _messageManager.isSelectionMode,
+                    onExitSelectionMode: () {
+                      setState(() {
+                        _messageManager.toggleSelectionMode();
+                      });
+                    },
                   ),
                 ),
-                ScrollTabs(
-                  tabs: _tabManager.tabs,
-                  selectedIndex: _tabManager.selectedTabIndex,
-                  onTabSelected: (index) => setState(() {
-                    _tabManager.handleTabSelection(index);
-                  }),
-                ),
+                if (!_messageManager.isSelectionMode)
+                  ScrollTabs(
+                    tabs: _tabManager.tabs,
+                    selectedIndex: _tabManager.selectedTabIndex,
+                    onTabSelected: (index) => setState(() {
+                      _tabManager.handleTabSelection(index);
+                    }),
+                  ),
                 Expanded(
                   child: PageView.builder(
                     controller: _tabManager.pageController,
@@ -179,6 +200,24 @@ class _ChatScreenState extends State<ChatScreen>
                   onSendPressed: _sendMessage,
                   onAttachPressed: () {},
                   hintText: 'Новая заметка...',
+                  isSelectionMode: _messageManager.isSelectionMode,
+                  selectedCount: _messageManager.selectedMessages.length,
+                  onDelete: () async {
+                    for (var message in _messageManager.selectedMessages) {
+                      await _messageManager.deleteMessage(message);
+                    }
+                    setState(() {
+                      _messageManager.toggleSelectionMode();
+                    });
+                  },
+                  onMove: (category) async {
+                    for (var message in _messageManager.selectedMessages) {
+                      await _messageManager.moveMessage(message, category);
+                    }
+                    setState(() {
+                      _messageManager.toggleSelectionMode();
+                    });
+                  },
                 ),
               ],
             ),

@@ -3,6 +3,9 @@ import '../services/storage_service.dart';
 
 class MessageManager {
   final StorageService _storage;
+  bool _selectionMode = false;
+  final Set<Message> _selectedMessages = {};
+
   final Map<MessageCategory, List<Message>> messagesByCategory = {
     MessageCategory.inbox: [],
     MessageCategory.books: [],
@@ -20,6 +23,25 @@ class MessageManager {
   };
 
   MessageManager(this._storage);
+
+  bool get isSelectionMode => _selectionMode;
+  Set<Message> get selectedMessages => Set.from(_selectedMessages);
+
+  void toggleSelectionMode() {
+    _selectionMode = !_selectionMode;
+    _selectedMessages.clear();
+  }
+
+  void toggleMessageSelection(Message message) {
+    if (_selectedMessages.contains(message)) {
+      _selectedMessages.remove(message);
+      if (_selectedMessages.isEmpty) {
+        _selectionMode = false;
+      }
+    } else {
+      _selectedMessages.add(message);
+    }
+  }
 
   Future<void> initialize() async {
     await _storage.init();

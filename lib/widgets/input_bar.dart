@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../models/message.dart';
 
 class InputBar extends StatefulWidget {
   final TextEditingController controller;
@@ -12,6 +13,14 @@ class InputBar extends StatefulWidget {
 
   final String hintText;
 
+  final bool isSelectionMode;
+
+  final int selectedCount;
+
+  final VoidCallback onDelete;
+
+  final Function(MessageCategory) onMove;
+
   const InputBar({
     super.key,
     required this.controller,
@@ -19,6 +28,10 @@ class InputBar extends StatefulWidget {
     required this.onSendPressed,
     required this.onAttachPressed,
     required this.hintText,
+    this.isSelectionMode = false,
+    this.selectedCount = 0,
+    required this.onDelete,
+    required this.onMove,
   });
 
   @override
@@ -48,6 +61,36 @@ class _InputBarState extends State<InputBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isSelectionMode) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        color: AppColors.getPrimaryBackground(context),
+        child: Row(
+          children: [
+            Text(
+              '${widget.selectedCount} выбрано',
+              style: TextStyle(
+                color: AppColors.getPrimaryText(context),
+                fontSize: 16,
+                letterSpacing: -0.2,
+              ),
+            ),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.drive_file_move),
+              onPressed: () => _showMoveDialog(context),
+              color: AppColors.getPrimaryText(context),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: widget.onDelete,
+              color: AppColors.getPrimaryText(context),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: AppColors.getPrimaryBackground(context),
@@ -118,6 +161,10 @@ class _InputBarState extends State<InputBar> {
         ),
       ),
     );
+  }
+
+  void _showMoveDialog(BuildContext context) {
+    // ... код диалога перемещения
   }
 }
 
