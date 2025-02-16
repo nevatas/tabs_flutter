@@ -10,7 +10,6 @@ import '../managers/message_manager.dart';
 import '../managers/tab_manager.dart';
 import '../controllers/custom_page_controller.dart';
 import '../theme/app_colors.dart';
-import 'package:flutter/rendering.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -25,6 +24,7 @@ class _ChatScreenState extends State<ChatScreen>
   late final TabManager _tabManager;
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
+  double? _dragStartX;
 
   @override
   void initState() {
@@ -34,7 +34,11 @@ class _ChatScreenState extends State<ChatScreen>
       pageController: CustomPageController(),
     );
 
-    _messageManager.initialize();
+    _messageManager.initialize().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   Future<void> _sendMessage() async {
@@ -118,50 +122,66 @@ class _ChatScreenState extends State<ChatScreen>
             _tabManager.handleTabSelection(index, fromDrawer: true);
           }),
         ),
-        drawerEdgeDragWidth: _tabManager.selectedTabIndex == 0
-            ? MediaQuery.of(context).size.width
-            : null,
+        drawerEnableOpenDragGesture: false,
         body: SafeArea(
-          child: Column(
-            children: [
-              Builder(
-                builder: (context) => Header(
-                  onMenuPressed: () {
-                    _focusNode.unfocus();
-                    Scaffold.of(context).openDrawer();
-                  },
+          child: GestureDetector(
+            onHorizontalDragStart: (details) {
+              if (_tabManager.selectedTabIndex == 0) {
+                _dragStartX = details.globalPosition.dx;
+              }
+            },
+            onHorizontalDragUpdate: (details) {
+              if (_tabManager.selectedTabIndex == 0 &&
+                  _dragStartX != null &&
+                  details.globalPosition.dx - _dragStartX! > 50) {
+                _dragStartX = null;
+                Scaffold.of(context).openDrawer();
+              }
+            },
+            onHorizontalDragEnd: (_) {
+              _dragStartX = null;
+            },
+            child: Column(
+              children: [
+                Builder(
+                  builder: (context) => Header(
+                    onMenuPressed: () {
+                      _focusNode.unfocus();
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
                 ),
-              ),
-              ScrollTabs(
-                tabs: _tabManager.tabs,
-                selectedIndex: _tabManager.selectedTabIndex,
-                onTabSelected: (index) => setState(() {
-                  _tabManager.handleTabSelection(index);
-                }),
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _tabManager.pageController,
-                  itemCount: MessageCategory.values.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _tabManager.selectedTabIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final category = MessageCategory.values[index];
-                    return _buildMessageList(category);
-                  },
+                ScrollTabs(
+                  tabs: _tabManager.tabs,
+                  selectedIndex: _tabManager.selectedTabIndex,
+                  onTabSelected: (index) => setState(() {
+                    _tabManager.handleTabSelection(index);
+                  }),
                 ),
-              ),
-              InputBar(
-                controller: _textController,
-                focusNode: _focusNode,
-                onSendPressed: _sendMessage,
-                onAttachPressed: () {},
-                hintText: 'Новая заметка...',
-              ),
-            ],
+                Expanded(
+                  child: PageView.builder(
+                    controller: _tabManager.pageController,
+                    itemCount: MessageCategory.values.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _tabManager.selectedTabIndex = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final category = MessageCategory.values[index];
+                      return _buildMessageList(category);
+                    },
+                  ),
+                ),
+                InputBar(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  onSendPressed: _sendMessage,
+                  onAttachPressed: () {},
+                  hintText: 'Новая заметка...',
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -24,6 +24,8 @@ class MessageManager {
   Future<void> initialize() async {
     await _storage.init();
     for (var category in MessageCategory.values) {
+      messagesByCategory[category] = [];
+      isLoading[category] = false;
       await loadMoreMessages(category);
     }
   }
