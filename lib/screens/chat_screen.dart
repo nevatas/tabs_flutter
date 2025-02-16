@@ -98,33 +98,6 @@ class _ChatScreenState extends State<ChatScreen>
 
           return MessageBubble(
             message: messages[messageIndex],
-            onMove: (newCategory) async {
-              try {
-                await _messageManager.moveMessage(
-                    messages[messageIndex], newCategory);
-                setState(() {});
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Не удалось переместить сообщение')),
-                  );
-                }
-              }
-            },
-            onDelete: () async {
-              try {
-                await _messageManager.deleteMessage(messages[messageIndex]);
-                setState(() {});
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Не удалось удалить сообщение')),
-                  );
-                }
-              }
-            },
           );
         },
       ),

@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../controllers/custom_page_controller.dart';
+import '../models/tab_item.dart';
 
 class TabManager {
-  final List<String> tabs = [
-    'Inbox',
-    'Books',
-    'Ideas',
-    'Words',
-    'Quotes',
-  ];
+  final List<TabItem> tabs = TabItem.defaultTabs;
 
   final CustomPageController pageController;
   final Map<MessageCategory, ScrollController> scrollControllers = {};

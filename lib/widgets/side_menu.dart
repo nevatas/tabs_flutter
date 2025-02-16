@@ -1,9 +1,10 @@
 // widgets/side_menu.dart
 import 'package:flutter/material.dart';
 import 'side_menu_tab.dart';
+import '../models/tab_item.dart';
 
 class SideMenu extends StatelessWidget {
-  final List<String> tabs;
+  final List<TabItem> tabs;
   final int selectedIndex;
   final Function(int) onTabSelected;
 
@@ -27,8 +28,8 @@ class SideMenu extends StatelessWidget {
             ...List.generate(
               tabs.length,
               (index) => SideMenuTab(
-                title: tabs[index],
-                emoji: _getEmojiForTab(index),
+                title: tabs[index].title,
+                emoji: tabs[index].emoji,
                 isSelected: index == selectedIndex,
                 onTap: () {
                   onTabSelected(index);
@@ -41,22 +42,5 @@ class SideMenu extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getEmojiForTab(int index) {
-    switch (index) {
-      case 0:
-        return '📥';
-      case 1:
-        return '📚';
-      case 2:
-        return '💡';
-      case 3:
-        return '📝';
-      case 4:
-        return '💭';
-      default:
-        return '📁';
-    }
   }
 }

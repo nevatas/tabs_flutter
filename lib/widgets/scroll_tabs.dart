@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../models/tab_item.dart';
 
 class ScrollTabs extends StatefulWidget {
-  final List<String> tabs;
+  final List<TabItem> tabs;
   final int selectedIndex;
   final Function(int) onTabSelected;
 
@@ -116,17 +117,27 @@ class _ScrollTabsState extends State<ScrollTabs> {
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        widget.tabs[index],
-                        style: TextStyle(
-                          color: AppColors.getPrimaryText(context),
-                          fontWeight: FontWeight.lerp(
-                            FontWeight.normal,
-                            FontWeight.bold,
-                            value,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.tabs[index].emoji,
+                            style: const TextStyle(fontSize: 16),
                           ),
-                          letterSpacing: -0.2,
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.tabs[index].title,
+                            style: TextStyle(
+                              color: AppColors.getPrimaryText(context),
+                              fontWeight: FontWeight.lerp(
+                                FontWeight.normal,
+                                FontWeight.bold,
+                                value,
+                              ),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
