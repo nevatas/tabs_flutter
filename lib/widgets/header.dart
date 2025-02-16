@@ -34,7 +34,7 @@ class Header extends StatelessWidget {
               color: AppColors.getPrimaryText(context),
               fontSize: 20,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.4,
+              letterSpacing: 0.2,
             ),
           ),
         ],

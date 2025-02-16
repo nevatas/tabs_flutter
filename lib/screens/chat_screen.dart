@@ -10,6 +10,7 @@ import '../managers/message_manager.dart';
 import '../managers/tab_manager.dart';
 import '../controllers/custom_page_controller.dart';
 import '../theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -68,6 +69,51 @@ class _ChatScreenState extends State<ChatScreen>
 
   Widget _buildMessageList(MessageCategory category) {
     final messages = _messageManager.messagesByCategory[category]!;
+
+    if (messages.isEmpty && !_messageManager.isLoading[category]!) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: _focusNode.hasFocus ? 32 : 64,
+                fontFamily: GoogleFonts.inter().fontFamily,
+              ),
+              child: Text(_tabManager.tabs[category.index].emoji),
+            ),
+            const SizedBox(height: 16),
+            Column(
+              children: [
+                Text(
+                  _tabManager.tabs[category.index].title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryText(context),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                    fontFamily: GoogleFonts.inter().fontFamily,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Напишите первую заметку',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.getSecondaryText(context),
+                    fontSize: 17,
+                    letterSpacing: 0.2,
+                    fontFamily: GoogleFonts.inter().fontFamily,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -187,11 +233,15 @@ class _ChatScreenState extends State<ChatScreen>
                           return _buildMessageList(category);
                         },
                       ),
-                      if (!_messageManager.isSelectionMode)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        top: _messageManager.isSelectionMode ? -56 : 0,
+                        left: 0,
+                        right: 0,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _messageManager.isSelectionMode ? 0 : 1,
                           child: ScrollTabs(
                             tabs: _tabManager.tabs,
                             selectedIndex: _tabManager.selectedTabIndex,
@@ -200,6 +250,7 @@ class _ChatScreenState extends State<ChatScreen>
                             }),
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),

@@ -25,84 +25,78 @@ class MessageBubble extends StatelessWidget {
     return GestureDetector(
       onLongPress: onLongPress,
       onTap: isSelectionMode ? onSelect : null,
-      child: Row(
-        children: [
-          if (isSelectionMode)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Transform.scale(
-                scale: 1.2,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8, right: 16),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isSelectionMode)
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 400),
+                  opacity: isSelectionMode ? 1 : 0,
+                  child: TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 400),
+                    tween: Tween(begin: 0.5, end: 1.0),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          margin: const EdgeInsets.only(right: 12, top: 8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.getAccentBackground(context)
+                                  : AppColors.getDividedColor(context),
+                              width: 2,
+                            ),
+                            color: isSelected
+                                ? AppColors.getAccentBackground(context)
+                                : Colors.transparent,
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              Expanded(
                 child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.getAccentBackground(context)
-                          : AppColors.getDividedColor(context),
-                      width: 2,
-                    ),
-                    color: isSelected
-                        ? AppColors.getAccentBackground(context)
-                        : Colors.transparent,
-                  ),
-                  child: isSelected
-                      ? Icon(
-                          Icons.check,
-                          size: 16,
-                          color: AppColors.getAccentText(context),
-                        )
-                      : null,
-                ),
-              ),
-            ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.getSecondaryBackground(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.getDividedColor(context),
-                    width: 1,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 40),
-                      child: Text(
-                        message.text,
-                        style: TextStyle(
-                          color: AppColors.getPrimaryText(context),
-                          fontSize: 16,
-                          letterSpacing: -0.2,
-                        ),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.getSecondaryBackground(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.getTertiaryBackground(context),
+                        width: 1,
                       ),
                     ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Text(
-                        _dateFormat.format(message.timestamp),
-                        style: TextStyle(
-                          color: AppColors.getSecondaryText(context),
-                          fontSize: 12,
-                          letterSpacing: -0.2,
-                        ),
+                    child: Text(
+                      message.text,
+                      style: TextStyle(
+                        color: AppColors.getPrimaryText(context),
+                        letterSpacing: 0.2,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

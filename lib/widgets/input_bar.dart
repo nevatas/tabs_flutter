@@ -61,36 +61,6 @@ class _InputBarState extends State<InputBar> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isSelectionMode) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: AppColors.getPrimaryBackground(context),
-        child: Row(
-          children: [
-            Text(
-              '${widget.selectedCount} выбрано',
-              style: TextStyle(
-                color: AppColors.getPrimaryText(context),
-                fontSize: 16,
-                letterSpacing: -0.2,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.drive_file_move),
-              onPressed: () => _showMoveDialog(context),
-              color: AppColors.getPrimaryText(context),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: widget.onDelete,
-              color: AppColors.getPrimaryText(context),
-            ),
-          ],
-        ),
-      );
-    }
-
     return Container(
       padding: const EdgeInsets.only(
         left: 16,
@@ -101,76 +71,127 @@ class _InputBarState extends State<InputBar> {
         color: AppColors.getPrimaryBackground(context),
         boxShadow: [
           BoxShadow(
-            color: AppColors.getPrimaryBackground(context).withOpacity(1.0),
-            blurRadius: 48,
-            spreadRadius: 24,
+            color: AppColors.getPrimaryBackground(context),
+            blurRadius: 16,
+            spreadRadius: 8,
+          ),
+          BoxShadow(
+            color: AppColors.getPrimaryBackground(context),
+            blurRadius: 16,
+            spreadRadius: 8,
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.getSecondaryBackground(context),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.getTertiaryBackground(context),
-            width: 1,
+      child: AnimatedCrossFade(
+        duration: const Duration(milliseconds: 300),
+        crossFadeState: widget.isSelectionMode
+            ? CrossFadeState.showFirst
+            : CrossFadeState.showSecond,
+        firstChild: Container(
+          decoration: BoxDecoration(
+            color: AppColors.getSecondaryBackground(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getTertiaryBackground(context),
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Text(
+                  '${widget.selectedCount} выбрано',
+                  style: TextStyle(
+                    color: AppColors.getPrimaryText(context),
+                    fontSize: 16,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.drive_file_move),
+                      onPressed: () => _showMoveDialog(context),
+                      color: AppColors.getPrimaryText(context),
+                      iconSize: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.delete),
+                      onPressed: widget.onDelete,
+                      color: AppColors.getPrimaryText(context),
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // TextField с поддержкой мультистрок
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: TextField(
-                controller: widget.controller,
-                focusNode: widget.focusNode,
-                maxLines: 5,
-                minLines: 1,
-                style: TextStyle(
-                  color: AppColors.getPrimaryText(context),
-                  letterSpacing: -0.2,
-                ),
-                decoration: InputDecoration(
-                  hintText: widget.hintText,
-                  hintStyle: TextStyle(
-                    color: AppColors.getSecondaryText(context),
-                    letterSpacing: -0.2,
-                  ),
-                  isDense: true,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => widget.onSendPressed(),
-              ),
+        secondChild: Container(
+          decoration: BoxDecoration(
+            color: AppColors.getSecondaryBackground(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.getTertiaryBackground(context),
+              width: 1,
             ),
-
-            // Нижняя панель с кнопками
-
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  // Кнопка прикрепления
-
-                  _AttachButton(
-                    onPressed: widget.onAttachPressed,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: widget.focusNode,
+                  maxLines: 5,
+                  minLines: 1,
+                  style: TextStyle(
+                    color: AppColors.getPrimaryText(context),
+                    letterSpacing: 0.2,
                   ),
-
-                  const Spacer(),
-
-                  // Кнопка отправки
-
-                  _SendButton(
-                    onPressed: widget.onSendPressed,
-                    isEnabled: !isTextEmpty,
+                  decoration: InputDecoration(
+                    hintText: widget.hintText,
+                    hintStyle: TextStyle(
+                      color: AppColors.getSecondaryText(context),
+                      letterSpacing: 0.2,
+                    ),
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
                   ),
-                ],
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => widget.onSendPressed(),
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    _AttachButton(
+                      onPressed: widget.onAttachPressed,
+                    ),
+                    const Spacer(),
+                    _SendButton(
+                      onPressed: widget.onSendPressed,
+                      isEnabled: !isTextEmpty,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
