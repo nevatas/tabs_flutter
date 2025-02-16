@@ -44,18 +44,15 @@ class _ChatScreenState extends State<ChatScreen>
       category: _tabManager.currentCategory,
     );
 
-    final messageText = _textController.text;
     _textController.clear();
-
     await _messageManager.sendMessage(message);
-
     setState(() {});
 
     final controller =
         _tabManager.scrollControllers[_tabManager.currentCategory];
     if (controller?.hasClients ?? false) {
       await controller!.animateTo(
-        controller.position.maxScrollExtent + 100,
+        0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -78,11 +75,17 @@ class _ChatScreenState extends State<ChatScreen>
       child: ListView.builder(
         key: PageStorageKey(category),
         controller: _tabManager.scrollControllers[category],
+        reverse: true,
         padding: const EdgeInsets.all(16),
+        shrinkWrap: true,
+        physics: const AlwaysScrollableScrollPhysics(),
+        clipBehavior: Clip.none,
         itemCount:
             messages.length + (_messageManager.isLoading[category]! ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index == messages.length) {
+          final messageIndex = messages.length - 1 - index;
+
+          if (messageIndex < 0) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(8.0),
@@ -90,11 +93,13 @@ class _ChatScreenState extends State<ChatScreen>
               ),
             );
           }
+
           return MessageBubble(
-            message: messages[index],
+            message: messages[messageIndex],
             onMove: (newCategory) async {
               try {
-                await _messageManager.moveMessage(messages[index], newCategory);
+                await _messageManager.moveMessage(
+                    messages[messageIndex], newCategory);
                 setState(() {});
               } catch (e) {
                 if (mounted) {
@@ -107,7 +112,7 @@ class _ChatScreenState extends State<ChatScreen>
             },
             onDelete: () async {
               try {
-                await _messageManager.deleteMessage(messages[index]);
+                await _messageManager.deleteMessage(messages[messageIndex]);
                 setState(() {});
               } catch (e) {
                 if (mounted) {
@@ -127,6 +132,7 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       drawer: SideMenu(
         tabs: _tabManager.tabs,
         selectedIndex: _tabManager.selectedTabIndex,
@@ -136,7 +142,6 @@ class _ChatScreenState extends State<ChatScreen>
       ),
       onDrawerChanged: (isOpened) {
         if (isOpened) {
-          // Отложено снимаем фокус после открытия drawer
           WidgetsBinding.instance.addPostFrameCallback((_) {
             FocusManager.instance.primaryFocus?.unfocus();
           });
