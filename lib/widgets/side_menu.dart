@@ -46,9 +46,23 @@ class SideMenu extends StatelessWidget {
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: tabs.length,
+                    itemCount: tabs.length + 1,
                     itemBuilder: (context, index) {
-                      final reversedIndex = (tabs.length - 1) - index;
+                      if (index == tabs.length) {
+                        return Center(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.7,
+                            child: CreateTabButton(
+                              onCreateTab: (String title) {
+                                Navigator.pop(context);
+                              },
+                              index: index,
+                              tabsCount: tabs.length + 1,
+                            ),
+                          ),
+                        );
+                      }
+                      final reversedIndex = tabs.length - index - 1;
                       return Center(
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width * 0.7,
@@ -61,7 +75,7 @@ class SideMenu extends StatelessWidget {
                               Navigator.pop(context);
                             },
                             index: index,
-                            tabsCount: tabs.length,
+                            tabsCount: tabs.length + 1,
                           ),
                         ),
                       );
@@ -173,6 +187,144 @@ class _SideMenuTabState extends State<SideMenuTab> {
                       ),
                       child: Text(widget.title),
                     ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CreateTabButton extends StatefulWidget {
+  final Function(String) onCreateTab;
+  final int index;
+  final int tabsCount;
+
+  const CreateTabButton({
+    super.key,
+    required this.onCreateTab,
+    required this.index,
+    required this.tabsCount,
+  });
+
+  @override
+  State<CreateTabButton> createState() => _CreateTabButtonState();
+}
+
+class _CreateTabButtonState extends State<CreateTabButton> {
+  bool _isEditing = false;
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 50 * (widget.tabsCount - widget.index - 1)), () {
+      if (mounted) {
+        setState(() => _visible = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: -1.0, end: _visible ? 0.0 : -1.0),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(value * 100, 0),
+          child: Opacity(
+            opacity: value == -1 ? 0 : 1,
+            child: child,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: SmoothContainer(
+          smoothness: 0.6,
+          borderRadius: BorderRadius.circular(12),
+          color: AppColors.getPrimaryBackground(context),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (!_isEditing) {
+                  setState(() => _isEditing = true);
+                  _focusNode.requestFocus();
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.add,
+                          size: 18,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    if (_isEditing)
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          style: TextStyle(
+                            color: AppColors.getPrimaryText(context),
+                            fontSize: 17,
+                            letterSpacing: 0.2,
+                            fontFamily: GoogleFonts.inter().fontFamily,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                          onSubmitted: (value) {
+                            if (value.isNotEmpty) {
+                              widget.onCreateTab(value);
+                            }
+                            setState(() => _isEditing = false);
+                            _controller.clear();
+                          },
+                        ),
+                      )
+                    else
+                      Text(
+                        'Make a Tab',
+                        style: TextStyle(
+                          color: AppColors.getSecondaryText(context),
+                          fontSize: 17,
+                          letterSpacing: 0.2,
+                          fontFamily: GoogleFonts.inter().fontFamily,
+                        ),
+                      ),
                   ],
                 ),
               ),

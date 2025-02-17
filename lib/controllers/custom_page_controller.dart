@@ -9,7 +9,6 @@ class CustomPageController extends PageController {
   }) : super(
          initialPage: initialPage,
          keepPage: keepPage,
-         viewportFraction: 0.8,
        );
 
   Future<void> animateToPageWithoutBuilding(

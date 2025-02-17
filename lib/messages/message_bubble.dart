@@ -87,49 +87,39 @@ class MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onLongPress: onMove != null ? () => _showMoveDialog(context) : null,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          constraints: const BoxConstraints(
-            minWidth: 0,
-            maxWidth: double.infinity,
-            minHeight: 0,
-            maxHeight: double.infinity,
-          ),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.getSecondaryBackground(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: SmoothRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ).borderRadius,
             border: Border.all(
               color: AppColors.getDividedColor(context),
               width: 1,
             ),
           ),
-          child: Stack(
-            fit: StackFit.loose,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 40),
-                child: Text(
-                  message.text,
-                  style: TextStyle(
-                    color: AppColors.getPrimaryText(context),
-                    fontSize: 17,
-                    letterSpacing: 0.2,
-                  ),
+              Text(
+                message.text,
+                style: TextStyle(
+                  color: AppColors.getPrimaryText(context),
+                  fontSize: 17,
+                  letterSpacing: 0.2,
                 ),
               ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Text(
-                  _dateFormat.format(message.timestamp),
-                  style: TextStyle(
-                    color: AppColors.getSecondaryText(context),
-                    fontSize: 12,
-                    letterSpacing: -0.2,
-                  ),
+              const SizedBox(height: 4),
+              Text(
+                _dateFormat.format(message.timestamp),
+                style: TextStyle(
+                  color: AppColors.getSecondaryText(context),
+                  fontSize: 12,
+                  letterSpacing: -0.2,
                 ),
               ),
             ],
