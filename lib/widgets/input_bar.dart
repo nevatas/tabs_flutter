@@ -44,7 +44,6 @@ class _InputBarState extends State<InputBar> {
   @override
   void initState() {
     super.initState();
-
     widget.controller.addListener(_onTextChanged);
   }
 
@@ -55,7 +54,6 @@ class _InputBarState extends State<InputBar> {
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
-
     super.dispose();
   }
 
