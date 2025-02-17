@@ -25,7 +25,7 @@ class MessageBubble extends StatelessWidget {
       onLongPress: onLongPress,
       onTap: isSelectionMode ? onSelect : null,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8, right: 16),
+        margin: const EdgeInsets.only(bottom: 8),
         child: AnimatedSize(
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
@@ -73,22 +73,20 @@ class MessageBubble extends StatelessWidget {
                 ),
               Expanded(
                 child: Container(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.getSecondaryBackground(context),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.getTertiaryBackground(context),
-                        width: 1,
-                      ),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.getSecondaryBackground(context),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.getTertiaryBackground(context),
+                      width: 1,
                     ),
-                    child: Text(
-                      message.text,
-                      style: TextStyle(
-                        color: AppColors.getPrimaryText(context),
-                        letterSpacing: 0.2,
-                      ),
+                  ),
+                  child: Text(
+                    message.text,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryText(context),
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
