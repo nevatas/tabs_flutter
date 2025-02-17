@@ -81,7 +81,7 @@ class _SideMenuState extends State<SideMenu> {
                           ),
                         );
                       }
-                      final tabIndex = widget.tabs.length - index;
+                      final tabIndex = index - 1;
                       return Center(
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width * 0.7,
