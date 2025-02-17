@@ -138,7 +138,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 50 * (widget.tabsCount - widget.index - 1)), () {
+    Future.delayed(Duration(milliseconds: 50 * widget.index), () {
       if (mounted) {
         setState(() => _visible = true);
       }
@@ -244,7 +244,7 @@ class _CreateTabButtonState extends State<CreateTabButton> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 50 * (widget.tabsCount - widget.index - 1)), () {
+    Future.delayed(Duration(milliseconds: 50 * widget.index), () {
       if (mounted) {
         setState(() => _visible = true);
       }
