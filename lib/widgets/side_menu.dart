@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:smooth_corner/smooth_corner.dart';
 
-class SideMenu extends StatelessWidget {
+class SideMenu extends StatefulWidget {
   final List<TabItem> tabs;
   final int selectedIndex;
   final Function(int) onTabSelected;
@@ -17,6 +17,13 @@ class SideMenu extends StatelessWidget {
     required this.selectedIndex,
     required this.onTabSelected,
   });
+
+  @override
+  State<SideMenu> createState() => _SideMenuState();
+}
+
+class _SideMenuState extends State<SideMenu> {
+  bool _isCreateTabFocused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +46,23 @@ class SideMenu extends StatelessWidget {
             borderRadius: BorderRadius.zero,
           ),
           child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Spacer(),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: tabs.length + 1,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true,
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    itemCount: widget.tabs.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == tabs.length) {
+                      if (index == 0) {
                         return Center(
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width * 0.7,
@@ -56,33 +70,38 @@ class SideMenu extends StatelessWidget {
                               onCreateTab: (String title) {
                                 Navigator.pop(context);
                               },
+                              onFocusChange: (focused) {
+                                setState(() {
+                                  _isCreateTabFocused = focused;
+                                });
+                              },
                               index: index,
-                              tabsCount: tabs.length + 1,
+                              tabsCount: widget.tabs.length + 1,
                             ),
                           ),
                         );
                       }
-                      final reversedIndex = tabs.length - index - 1;
+                      final tabIndex = widget.tabs.length - index;
                       return Center(
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width * 0.7,
                           child: SideMenuTab(
-                            emoji: tabs[reversedIndex].emoji,
-                            title: tabs[reversedIndex].title,
-                            isSelected: selectedIndex == reversedIndex,
+                            emoji: widget.tabs[tabIndex].emoji,
+                            title: widget.tabs[tabIndex].title,
+                            isSelected: !_isCreateTabFocused && widget.selectedIndex == tabIndex,
                             onTap: () {
-                              onTabSelected(reversedIndex);
+                              widget.onTabSelected(tabIndex);
                               Navigator.pop(context);
                             },
                             index: index,
-                            tabsCount: tabs.length + 1,
+                            tabsCount: widget.tabs.length + 1,
                           ),
                         ),
                       );
                     },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -200,12 +219,14 @@ class _SideMenuTabState extends State<SideMenuTab> {
 
 class CreateTabButton extends StatefulWidget {
   final Function(String) onCreateTab;
+  final Function(bool) onFocusChange;
   final int index;
   final int tabsCount;
 
   const CreateTabButton({
     super.key,
     required this.onCreateTab,
+    required this.onFocusChange,
     required this.index,
     required this.tabsCount,
   });
@@ -228,13 +249,11 @@ class _CreateTabButtonState extends State<CreateTabButton> {
         setState(() => _visible = true);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
+    
+    _focusNode.addListener(() {
+      widget.onFocusChange(_focusNode.hasFocus);
+      setState(() {});
+    });
   }
 
   @override
@@ -257,14 +276,24 @@ class _CreateTabButtonState extends State<CreateTabButton> {
         child: SmoothContainer(
           smoothness: 0.6,
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.getPrimaryBackground(context),
+          color: _focusNode.hasFocus
+              ? AppColors.getSecondaryBackground(context)
+              : AppColors.getPrimaryBackground(context),
+          side: _focusNode.hasFocus
+              ? BorderSide(
+                  color: AppColors.getTertiaryBackground(context),
+                  width: 1,
+                )
+              : BorderSide.none,
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
                 if (!_isEditing) {
                   setState(() => _isEditing = true);
-                  _focusNode.requestFocus();
+                  Future.delayed(const Duration(milliseconds: 50), () {
+                    _focusNode.requestFocus();
+                  });
                 }
               },
               child: Padding(
@@ -310,8 +339,10 @@ class _CreateTabButtonState extends State<CreateTabButton> {
                             if (value.isNotEmpty) {
                               widget.onCreateTab(value);
                             }
-                            setState(() => _isEditing = false);
-                            _controller.clear();
+                            setState(() {
+                              _isEditing = false;
+                              _controller.clear();
+                            });
                           },
                         ),
                       )
@@ -333,5 +364,12 @@ class _CreateTabButtonState extends State<CreateTabButton> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 }
