@@ -46,6 +46,8 @@ class SideMenu extends StatelessWidget {
                           onTabSelected(reversedIndex);
                           Navigator.pop(context);
                         },
+                        index: index,
+                        tabsCount: tabs.length,
                       ),
                     ),
                   );
@@ -59,11 +61,13 @@ class SideMenu extends StatelessWidget {
   }
 }
 
-class SideMenuTab extends StatelessWidget {
+class SideMenuTab extends StatefulWidget {
   final String emoji;
   final String title;
   final bool isSelected;
   final VoidCallback onTap;
+  final int index;
+  final int tabsCount;
 
   const SideMenuTab({
     super.key,
@@ -71,60 +75,93 @@ class SideMenuTab extends StatelessWidget {
     required this.title,
     required this.isSelected,
     required this.onTap,
+    required this.index,
+    required this.tabsCount,
   });
 
   @override
+  State<SideMenuTab> createState() => _SideMenuTabState();
+}
+
+class _SideMenuTabState extends State<SideMenuTab> {
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 50 * (widget.tabsCount - widget.index - 1)), () {
+      if (mounted) {
+        setState(() => _visible = true);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.getSecondaryBackground(context)
-            : AppColors.getPrimaryBackground(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected
-              ? AppColors.getTertiaryBackground(context)
-              : Colors.transparent,
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: -1.0, end: _visible ? 0.0 : -1.0),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(value * 100, 0),
+          child: Opacity(
+            opacity: value == -1 ? 0 : 1,
+            child: child,
+          ),
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: widget.isSelected
+              ? AppColors.getSecondaryBackground(context)
+              : AppColors.getPrimaryBackground(context),
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  emoji,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontFamily: GoogleFonts.inter().fontFamily,
+          border: Border.all(
+            color: widget.isSelected
+                ? AppColors.getTertiaryBackground(context)
+                : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: widget.onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.emoji,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontFamily: GoogleFonts.inter().fontFamily,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  style: TextStyle(
-                    color: AppColors.getPrimaryText(context),
-                    fontSize: 17,
-                    letterSpacing: 0.2,
-                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                    fontFamily: GoogleFonts.inter().fontFamily,
+                  const SizedBox(width: 12),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryText(context),
+                      fontSize: 17,
+                      letterSpacing: 0.2,
+                      fontWeight: widget.isSelected ? FontWeight.w500 : FontWeight.normal,
+                      fontFamily: GoogleFonts.inter().fontFamily,
+                    ),
+                    child: Text(widget.title),
                   ),
-                  child: Text(title),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
