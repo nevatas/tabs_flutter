@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/chat_screen.dart'; // Импорт вашего ChatScreen
+import 'screens/chat_screen.dart';
+import 'widgets/side_menu.dart';
+import 'models/tab_item.dart';
 
 class MessengerApp extends StatelessWidget {
   const MessengerApp({super.key});
@@ -17,7 +19,7 @@ class MessengerApp extends StatelessWidget {
                 bodyLarge: const TextStyle(
                   fontSize: 17,
                   fontVariations: [
-                    FontVariation('wght', 400), // Regular
+                    FontVariation('wght', 400),
                   ],
                 ),
                 bodyMedium: const TextStyle(
@@ -29,7 +31,26 @@ class MessengerApp extends StatelessWidget {
               ),
         ),
       ),
-      home: const ChatScreen(),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: SideMenu(
+        tabs: TabItem.defaultTabs,
+        selectedIndex: 0,
+        onTabSelected: (index) {
+          // Обработка выбора таба
+        },
+      ),
+      drawerEdgeDragWidth: 60, // Ширина области для свайпа
+      body: const ChatScreen(),
     );
   }
 }

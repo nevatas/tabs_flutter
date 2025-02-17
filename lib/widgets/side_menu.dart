@@ -6,6 +6,43 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:smooth_corner/smooth_corner.dart';
 
+class DragToOpenWrapper extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onOpenMenu;
+  final double dragWidth;
+
+  const DragToOpenWrapper({
+    super.key,
+    required this.child,
+    required this.onOpenMenu,
+    this.dragWidth = 60,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: dragWidth,
+          child: GestureDetector(
+            onHorizontalDragStart: (details) {
+              if (details.localPosition.dx <= dragWidth) {
+                onOpenMenu();
+              }
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Container(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class SideMenu extends StatefulWidget {
   final List<TabItem> tabs;
   final int selectedIndex;
