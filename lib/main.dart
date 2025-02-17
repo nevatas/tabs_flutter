@@ -15,7 +15,7 @@ class MessengerApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(
           ThemeData.light().textTheme.copyWith(
                 bodyLarge: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
                   fontVariations: [
                     FontVariation('wght', 400), // Regular
                   ],

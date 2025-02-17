@@ -90,7 +90,7 @@ class _InputBarState extends State<InputBar> {
         firstChild: Container(
           decoration: BoxDecoration(
             color: AppColors.getSecondaryBackground(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: AppColors.getTertiaryBackground(context),
               width: 1,
@@ -105,7 +105,7 @@ class _InputBarState extends State<InputBar> {
                   '${widget.selectedCount} выбрано',
                   style: TextStyle(
                     color: AppColors.getPrimaryText(context),
-                    fontSize: 16,
+                    fontSize: 17,
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -141,7 +141,7 @@ class _InputBarState extends State<InputBar> {
         secondChild: Container(
           decoration: BoxDecoration(
             color: AppColors.getSecondaryBackground(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: AppColors.getTertiaryBackground(context),
               width: 1,
@@ -159,6 +159,7 @@ class _InputBarState extends State<InputBar> {
                   minLines: 1,
                   style: TextStyle(
                     color: AppColors.getPrimaryText(context),
+                    fontSize: 17,
                     letterSpacing: 0.2,
                   ),
                   decoration: InputDecoration(

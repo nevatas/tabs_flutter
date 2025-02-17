@@ -92,6 +92,12 @@ class MessageBubble extends StatelessWidget {
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          constraints: const BoxConstraints(
+            minWidth: 0,
+            maxWidth: double.infinity,
+            minHeight: 0,
+            maxHeight: double.infinity,
+          ),
           decoration: BoxDecoration(
             color: AppColors.getSecondaryBackground(context),
             borderRadius: BorderRadius.circular(12),
@@ -101,6 +107,7 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
           child: Stack(
+            fit: StackFit.loose,
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 40),
@@ -108,8 +115,8 @@ class MessageBubble extends StatelessWidget {
                   message.text,
                   style: TextStyle(
                     color: AppColors.getPrimaryText(context),
-                    fontSize: 16,
-                    letterSpacing: -0.2,
+                    fontSize: 17,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),

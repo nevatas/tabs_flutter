@@ -6,11 +6,10 @@ class CustomPageController extends PageController {
   CustomPageController({
     int initialPage = 0,
     bool keepPage = true,
-    double viewportFraction = 1.0,
   }) : super(
          initialPage: initialPage,
          keepPage: keepPage,
-         viewportFraction: viewportFraction,
+         viewportFraction: 0.8,
        );
 
   Future<void> animateToPageWithoutBuilding(
@@ -29,7 +28,11 @@ class CustomPageController extends PageController {
     required Curve curve,
   }) {
     _isUserGesture = false;
-    return super.animateToPage(page, duration: duration, curve: curve);
+    return super.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeIn,
+    );
   }
 
   // Переопределяем метод для отслеживания пользовательских жестов
