@@ -1,6 +1,5 @@
 // widgets/side_menu.dart
 import 'package:flutter/material.dart';
-import 'side_menu_tab.dart';
 import '../models/tab_item.dart';
 import '../theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,24 +27,13 @@ class SideMenu extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Категории',
-                style: TextStyle(
-                  color: AppColors.getPrimaryText(context),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.2,
-                  fontFamily: GoogleFonts.inter().fontFamily,
-                ),
-              ),
-            ),
             Expanded(
               child: ListView.builder(
+                reverse: true,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 itemCount: tabs.length,
                 itemBuilder: (context, index) {
+                  final reversedIndex = tabs.length - 1 - index;
                   final isSelected = selectedIndex == index;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
@@ -71,7 +59,7 @@ class SideMenu extends StatelessWidget {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () {
-                          onTabSelected(index);
+                          onTabSelected(reversedIndex);
                           Navigator.pop(context);
                         },
                         child: Padding(
@@ -82,8 +70,11 @@ class SideMenu extends StatelessWidget {
                           child: Row(
                             children: [
                               Text(
-                                tabs[index].emoji,
-                                style: const TextStyle(fontSize: 20),
+                                tabs[reversedIndex].emoji,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontFamily: GoogleFonts.inter().fontFamily,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               AnimatedDefaultTextStyle(
@@ -98,7 +89,7 @@ class SideMenu extends StatelessWidget {
                                       : FontWeight.normal,
                                   fontFamily: GoogleFonts.inter().fontFamily,
                                 ),
-                                child: Text(tabs[index].title),
+                                child: Text(tabs[reversedIndex].title),
                               ),
                             ],
                           ),
@@ -109,7 +100,6 @@ class SideMenu extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),

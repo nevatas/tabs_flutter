@@ -75,13 +75,12 @@ class _ChatScreenState extends State<ChatScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 300),
+            Text(
+              _tabManager.tabs[category.index].emoji,
               style: TextStyle(
-                fontSize: _focusNode.hasFocus ? 32 : 64,
+                fontSize: 48,
                 fontFamily: GoogleFonts.inter().fontFamily,
               ),
-              child: Text(_tabManager.tabs[category.index].emoji),
             ),
             const SizedBox(height: 16),
             Column(

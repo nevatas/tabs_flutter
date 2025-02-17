@@ -9,7 +9,6 @@ class MessageBubble extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onLongPress;
   final VoidCallback onSelect;
-  final _dateFormat = DateFormat('HH:mm');
 
   MessageBubble({
     super.key,
