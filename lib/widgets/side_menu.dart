@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:smooth_corner/smooth_corner.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class DragToOpenWrapper extends StatelessWidget {
   final Widget child;
@@ -197,6 +198,11 @@ class _SideMenuTabState extends State<SideMenuTab> {
         widget.onFocusChange?.call(_focusNode.hasFocus);
         setState(() {});
       });
+
+      // Добавляем слушатель изменений текста
+      _controller.addListener(() {
+        setState(() {}); // Обновляем UI при изменении текста
+      });
     }
   }
 
@@ -300,6 +306,33 @@ class _SideMenuTabState extends State<SideMenuTab> {
                     },
                   ),
                 ),
+                if (_controller.text.isNotEmpty) ...[
+                  const SizedBox(width: 16),
+                  InkWell(
+                    onTap: () {
+                      if (_controller.text.isNotEmpty) {
+                        widget.onCreateTab?.call(_controller.text);
+                        setState(() {
+                          _isEditing = false;
+                          _controller.clear();
+                        });
+                      }
+                    },
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: SvgPicture.asset(
+                        'assets/icons/tab_check.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.getSecondaryText(context),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           )
@@ -371,19 +404,39 @@ class _SideMenuTabState extends State<SideMenuTab> {
               ),
             ),
             const SizedBox(width: 12),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              style: TextStyle(
-                color: AppColors.getPrimaryText(context),
-                fontSize: 17,
-                letterSpacing: 0.2,
-                fontWeight:
-                    widget.isSelected ? FontWeight.w500 : FontWeight.normal,
-                fontFamily: GoogleFonts.inter().fontFamily,
+            Expanded(
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                style: TextStyle(
+                  color: AppColors.getPrimaryText(context),
+                  fontSize: 17,
+                  letterSpacing: 0.2,
+                  fontWeight:
+                      widget.isSelected ? FontWeight.w500 : FontWeight.normal,
+                  fontFamily: GoogleFonts.inter().fontFamily,
+                ),
+                child: Text(widget.title ?? ''),
               ),
-              child: Text(widget.title ?? ''),
             ),
+            if (widget.index == 1) ...[
+              // Показываем иконку только для Inbox
+              const SizedBox(width: 16),
+              SizedBox(
+                // Оборачиваем в SizedBox фиксированного размера
+                width: 24,
+                height: 24,
+                child: SvgPicture.asset(
+                  'assets/icons/tab_pin.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.getSecondaryText(context),
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
