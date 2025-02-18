@@ -153,6 +153,7 @@ class _InputBarState extends State<InputBar> {
                 child: TextField(
                   controller: widget.controller,
                   focusNode: widget.focusNode,
+                  textCapitalization: TextCapitalization.sentences,
                   maxLines: 5,
                   minLines: 1,
                   style: TextStyle(

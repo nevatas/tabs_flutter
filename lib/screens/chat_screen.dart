@@ -181,10 +181,11 @@ class _ChatScreenState extends State<ChatScreen>
             print('🔵 ChatScreen: onTabSelected with index $index');
             print(
                 '🔵 ChatScreen: current tab index before: ${_tabManager.selectedTabIndex}');
-            _tabManager.handleTabSelection(index, fromDrawer: true);
+            setState(() {
+              _tabManager.handleTabSelection(index, fromDrawer: true);
+            });
             print(
                 '🔵 ChatScreen: current tab index after: ${_tabManager.selectedTabIndex}');
-            setState(() {});
           },
         ),
         drawerEnableOpenDragGesture: false,

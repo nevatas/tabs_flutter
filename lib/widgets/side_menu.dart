@@ -78,60 +78,68 @@ class _SideMenuState extends State<SideMenu> {
             borderRadius: BorderRadius.zero,
           ),
           child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ListView.builder(
-                    shrinkWrap: true,
-                    reverse: true,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 16,
+            bottom: false,
+            child: SingleChildScrollView(
+              reverse: true,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      reverse: true,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 24,
+                      ),
+                      itemCount: widget.tabs.length + 1,
+                      itemBuilder: (context, index) {
+                        return Center(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.85,
+                            child: index == 0
+                                ? SideMenuTab(
+                                    isCreateTab: true,
+                                    isSelected: _isCreateTabFocused,
+                                    onCreateTab: (String title) {
+                                      Navigator.pop(context);
+                                    },
+                                    onFocusChange: (focused) {
+                                      setState(() {
+                                        _isCreateTabFocused = focused;
+                                      });
+                                    },
+                                    index: index,
+                                    tabsCount: widget.tabs.length + 1,
+                                  )
+                                : SideMenuTab(
+                                    emoji: widget.tabs[index - 1].emoji,
+                                    title: widget.tabs[index - 1].title,
+                                    isSelected: !_isCreateTabFocused &&
+                                        widget.selectedIndex == index - 1,
+                                    onTap: () {
+                                      print(
+                                          '🔵 SideMenu: onTap for index ${index - 1}');
+                                      widget.onTabSelected(index - 1);
+                                      Future.delayed(Duration.zero, () {
+                                        print(
+                                            '🔵 SideMenu: calling Navigator.pop');
+                                        Navigator.pop(context);
+                                      });
+                                    },
+                                    index: index,
+                                    tabsCount: widget.tabs.length + 1,
+                                  ),
+                          ),
+                        );
+                      },
                     ),
-                    itemCount: widget.tabs.length + 1,
-                    itemBuilder: (context, index) {
-                      return Center(
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.7,
-                          child: index == 0
-                              ? SideMenuTab(
-                                  isCreateTab: true,
-                                  isSelected: _isCreateTabFocused,
-                                  onCreateTab: (String title) {
-                                    Navigator.pop(context);
-                                  },
-                                  onFocusChange: (focused) {
-                                    setState(() {
-                                      _isCreateTabFocused = focused;
-                                    });
-                                  },
-                                  index: index,
-                                  tabsCount: widget.tabs.length + 1,
-                                )
-                              : SideMenuTab(
-                                  emoji: widget.tabs[index - 1].emoji,
-                                  title: widget.tabs[index - 1].title,
-                                  isSelected: !_isCreateTabFocused &&
-                                      widget.selectedIndex == index - 1,
-                                  onTap: () {
-                                    print(
-                                        '🔵 SideMenu: onTap for index ${index - 1}');
-                                    widget.onTabSelected(index - 1);
-                                    print('🔵 SideMenu: calling Navigator.pop');
-                                    Navigator.pop(context);
-                                  },
-                                  index: index,
-                                  tabsCount: widget.tabs.length + 1,
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -237,8 +245,8 @@ class _SideMenuTabState extends State<SideMenuTab> {
     return _isEditing
         ? Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+              horizontal: 20,
+              vertical: 16,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -263,6 +271,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
                   child: TextField(
                     controller: _controller,
                     focusNode: _focusNode,
+                    textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(
                       color: AppColors.getPrimaryText(context),
                       fontSize: 17,
@@ -303,8 +312,8 @@ class _SideMenuTabState extends State<SideMenuTab> {
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+                horizontal: 20,
+                vertical: 16,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -348,8 +357,8 @@ class _SideMenuTabState extends State<SideMenuTab> {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+          horizontal: 20,
+          vertical: 16,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -462,8 +471,8 @@ class _CreateTabButtonState extends State<CreateTabButton> {
             child: _isEditing
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: 20,
+                      vertical: 16,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -488,6 +497,7 @@ class _CreateTabButtonState extends State<CreateTabButton> {
                           child: TextField(
                             controller: _controller,
                             focusNode: _focusNode,
+                            textCapitalization: TextCapitalization.sentences,
                             style: TextStyle(
                               color: AppColors.getPrimaryText(context),
                               fontSize: 17,
@@ -528,8 +538,8 @@ class _CreateTabButtonState extends State<CreateTabButton> {
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: 20,
+                        vertical: 16,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
