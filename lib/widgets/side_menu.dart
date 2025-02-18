@@ -95,44 +95,40 @@ class _SideMenuState extends State<SideMenu> {
                     reverse: true,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 4,
+                      vertical: 16,
                     ),
                     itemCount: widget.tabs.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return Center(
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.7,
-                            child: CreateTabButton(
-                              onCreateTab: (String title) {
-                                Navigator.pop(context);
-                              },
-                              onFocusChange: (focused) {
-                                setState(() {
-                                  _isCreateTabFocused = focused;
-                                });
-                              },
-                              index: index,
-                              tabsCount: widget.tabs.length + 1,
-                            ),
-                          ),
-                        );
-                      }
-                      final tabIndex = index - 1;
                       return Center(
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width * 0.7,
-                          child: SideMenuTab(
-                            emoji: widget.tabs[tabIndex].emoji,
-                            title: widget.tabs[tabIndex].title,
-                            isSelected: !_isCreateTabFocused && widget.selectedIndex == tabIndex,
-                            onTap: () {
-                              widget.onTabSelected(tabIndex);
-                              Navigator.pop(context);
-                            },
-                            index: index,
-                            tabsCount: widget.tabs.length + 1,
-                          ),
+                          child: index == 0
+                              ? SideMenuTab(
+                                  isCreateTab: true,
+                                  isSelected: _isCreateTabFocused,
+                                  onCreateTab: (String title) {
+                                    Navigator.pop(context);
+                                  },
+                                  onFocusChange: (focused) {
+                                    setState(() {
+                                      _isCreateTabFocused = focused;
+                                    });
+                                  },
+                                  index: index,
+                                  tabsCount: widget.tabs.length + 1,
+                                )
+                              : SideMenuTab(
+                                  emoji: widget.tabs[index - 1].emoji,
+                                  title: widget.tabs[index - 1].title,
+                                  isSelected: !_isCreateTabFocused &&
+                                      widget.selectedIndex == index - 1,
+                                  onTap: () {
+                                    widget.onTabSelected(index - 1);
+                                    Navigator.pop(context);
+                                  },
+                                  index: index,
+                                  tabsCount: widget.tabs.length + 1,
+                                ),
                         ),
                       );
                     },
@@ -148,19 +144,25 @@ class _SideMenuState extends State<SideMenu> {
 }
 
 class SideMenuTab extends StatefulWidget {
-  final String emoji;
-  final String title;
+  final String? emoji; // Может быть null для состояния создания
+  final String? title; // Может быть null для состояния создания
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap; // Для обычного таба
+  final Function(String)? onCreateTab; // Для таба создания
+  final Function(bool)? onFocusChange; // Для таба создания
+  final bool isCreateTab; // Флаг, указывающий, что это таб создания
   final int index;
   final int tabsCount;
 
   const SideMenuTab({
     super.key,
-    required this.emoji,
-    required this.title,
+    this.emoji,
+    this.title,
     required this.isSelected,
-    required this.onTap,
+    this.onTap,
+    this.onCreateTab,
+    this.onFocusChange,
+    this.isCreateTab = false,
     required this.index,
     required this.tabsCount,
   });
@@ -171,6 +173,9 @@ class SideMenuTab extends StatefulWidget {
 
 class _SideMenuTabState extends State<SideMenuTab> {
   bool _visible = false;
+  bool _isEditing = false;
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -180,6 +185,13 @@ class _SideMenuTabState extends State<SideMenuTab> {
         setState(() => _visible = true);
       }
     });
+
+    if (widget.isCreateTab) {
+      _focusNode.addListener(() {
+        widget.onFocusChange?.call(_focusNode.hasFocus);
+        setState(() {});
+      });
+    }
   }
 
   @override
@@ -202,10 +214,11 @@ class _SideMenuTabState extends State<SideMenuTab> {
         child: SmoothContainer(
           smoothness: 0.6,
           borderRadius: BorderRadius.circular(12),
-          color: widget.isSelected
-              ? AppColors.getSecondaryBackground(context)
-              : AppColors.getPrimaryBackground(context),
-          side: widget.isSelected 
+          color:
+              (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
+                  ? AppColors.getSecondaryBackground(context)
+                  : AppColors.getPrimaryBackground(context),
+          side: (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
               ? BorderSide(
                   color: AppColors.getTertiaryBackground(context),
                   width: 1,
@@ -213,44 +226,165 @@ class _SideMenuTabState extends State<SideMenuTab> {
               : BorderSide.none,
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onTap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.emoji,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontFamily: GoogleFonts.inter().fontFamily,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      style: TextStyle(
-                        color: AppColors.getPrimaryText(context),
-                        fontSize: 17,
-                        letterSpacing: 0.2,
-                        fontWeight: widget.isSelected ? FontWeight.w500 : FontWeight.normal,
-                        fontFamily: GoogleFonts.inter().fontFamily,
-                      ),
-                      child: Text(widget.title),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: widget.isCreateTab
+                ? _buildCreateTab(context)
+                : _buildNormalTab(context),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildCreateTab(BuildContext context) {
+    return _isEditing
+        ? Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.add,
+                      size: 18,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    style: TextStyle(
+                      color: AppColors.getPrimaryText(context),
+                      fontSize: 17,
+                      letterSpacing: 0.2,
+                      fontFamily: GoogleFonts.inter().fontFamily,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      hintText: 'Make a Tab',
+                      hintStyle: TextStyle(
+                        color: AppColors.getSecondaryText(context),
+                        fontSize: 17,
+                        letterSpacing: 0.2,
+                        fontFamily: GoogleFonts.inter().fontFamily,
+                      ),
+                    ),
+                    onSubmitted: (value) {
+                      if (value.isNotEmpty) {
+                        widget.onCreateTab?.call(value);
+                      }
+                      setState(() {
+                        _isEditing = false;
+                        _controller.clear();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          )
+        : InkWell(
+            onTap: () {
+              setState(() => _isEditing = true);
+              Future.delayed(const Duration(milliseconds: 50), () {
+                _focusNode.requestFocus();
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.add,
+                        size: 18,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Make a Tab',
+                    style: TextStyle(
+                      color: AppColors.getSecondaryText(context),
+                      fontSize: 17,
+                      letterSpacing: 0.2,
+                      fontFamily: GoogleFonts.inter().fontFamily,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+  }
+
+  Widget _buildNormalTab(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              widget.emoji ?? '',
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: GoogleFonts.inter().fontFamily,
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              style: TextStyle(
+                color: AppColors.getPrimaryText(context),
+                fontSize: 17,
+                letterSpacing: 0.2,
+                fontWeight:
+                    widget.isSelected ? FontWeight.w500 : FontWeight.normal,
+                fontFamily: GoogleFonts.inter().fontFamily,
+              ),
+              child: Text(widget.title ?? ''),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 }
 
@@ -286,7 +420,7 @@ class _CreateTabButtonState extends State<CreateTabButton> {
         setState(() => _visible = true);
       }
     });
-    
+
     _focusNode.addListener(() {
       widget.onFocusChange(_focusNode.hasFocus);
       setState(() {});
@@ -324,79 +458,110 @@ class _CreateTabButtonState extends State<CreateTabButton> {
               : BorderSide.none,
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                if (!_isEditing) {
-                  setState(() => _isEditing = true);
-                  Future.delayed(const Duration(milliseconds: 50), () {
-                    _focusNode.requestFocus();
-                  });
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.add,
-                          size: 18,
-                          color: Colors.black,
+            child: _isEditing
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add,
+                              size: 18,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            style: TextStyle(
+                              color: AppColors.getPrimaryText(context),
+                              fontSize: 17,
+                              letterSpacing: 0.2,
+                              fontFamily: GoogleFonts.inter().fontFamily,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              hintText: 'Make a Tab',
+                              hintStyle: TextStyle(
+                                color: AppColors.getSecondaryText(context),
+                                fontSize: 17,
+                                letterSpacing: 0.2,
+                                fontFamily: GoogleFonts.inter().fontFamily,
+                              ),
+                            ),
+                            onSubmitted: (value) {
+                              if (value.isNotEmpty) {
+                                widget.onCreateTab(value);
+                              }
+                              setState(() {
+                                _isEditing = false;
+                                _controller.clear();
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : InkWell(
+                    onTap: () {
+                      setState(() => _isEditing = true);
+                      Future.delayed(const Duration(milliseconds: 50), () {
+                        _focusNode.requestFocus();
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.add,
+                                size: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Make a Tab',
+                            style: TextStyle(
+                              color: AppColors.getSecondaryText(context),
+                              fontSize: 17,
+                              letterSpacing: 0.2,
+                              fontFamily: GoogleFonts.inter().fontFamily,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    if (_isEditing)
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _focusNode,
-                          style: TextStyle(
-                            color: AppColors.getPrimaryText(context),
-                            fontSize: 17,
-                            letterSpacing: 0.2,
-                            fontFamily: GoogleFonts.inter().fontFamily,
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                          ),
-                          onSubmitted: (value) {
-                            if (value.isNotEmpty) {
-                              widget.onCreateTab(value);
-                            }
-                            setState(() {
-                              _isEditing = false;
-                              _controller.clear();
-                            });
-                          },
-                        ),
-                      )
-                    else
-                      Text(
-                        'Make a Tab',
-                        style: TextStyle(
-                          color: AppColors.getSecondaryText(context),
-                          fontSize: 17,
-                          letterSpacing: 0.2,
-                          fontFamily: GoogleFonts.inter().fontFamily,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ),
       ),

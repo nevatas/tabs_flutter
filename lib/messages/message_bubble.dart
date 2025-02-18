@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import '../models/message.dart';
 import '../theme/app_colors.dart';
+import 'package:smooth_corner/smooth_corner.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -96,6 +97,7 @@ class MessageBubble extends StatelessWidget {
             color: AppColors.getSecondaryBackground(context),
             borderRadius: SmoothRectangleBorder(
               borderRadius: BorderRadius.circular(12),
+              smoothness: 0.6,
             ).borderRadius,
             border: Border.all(
               color: AppColors.getDividedColor(context),
