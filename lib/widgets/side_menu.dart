@@ -123,7 +123,10 @@ class _SideMenuState extends State<SideMenu> {
                                   isSelected: !_isCreateTabFocused &&
                                       widget.selectedIndex == index - 1,
                                   onTap: () {
+                                    print(
+                                        '🔵 SideMenu: onTap for index ${index - 1}');
                                     widget.onTabSelected(index - 1);
+                                    print('🔵 SideMenu: calling Navigator.pop');
                                     Navigator.pop(context);
                                   },
                                   index: index,
@@ -344,7 +347,10 @@ class _SideMenuTabState extends State<SideMenuTab> {
 
   Widget _buildNormalTab(BuildContext context) {
     return InkWell(
-      onTap: widget.onTap,
+      onTap: () {
+        print('🔵 SideMenuTab: onTap called');
+        widget.onTap?.call();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 16,

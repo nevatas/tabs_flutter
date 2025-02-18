@@ -24,13 +24,13 @@ class TabManager {
       MessageCategory.values[selectedTabIndex];
 
   void handleTabSelection(int index, {bool fromDrawer = false}) {
-    if (fromDrawer) {
-      pendingTabIndex = index;
-      return;
-    }
+    print(
+        '🔵 TabManager: handleTabSelection called with index $index, fromDrawer: $fromDrawer');
+    print('🔵 TabManager: current selectedTabIndex: $selectedTabIndex');
 
     final oldIndex = selectedTabIndex;
     selectedTabIndex = index;
+    print('🔵 TabManager: selectedTabIndex changed from $oldIndex to $index');
 
     if (pageController.hasClients) {
       final difference = (index - oldIndex).abs();
