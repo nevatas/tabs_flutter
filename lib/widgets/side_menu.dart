@@ -66,14 +66,9 @@ class _SideMenuState extends State<SideMenu> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Размытие с фоном E2E2E2
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              color: const Color(0xFFE2E2E2), // Просто E2E2E2 без прозрачности
-            ),
-          ),
+        // Просто фон без размытия
+        Container(
+          color: const Color(0xFFE2E2E2),
         ),
         // Само меню
         Drawer(
