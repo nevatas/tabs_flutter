@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 
 class DragToOpenWrapper extends StatelessWidget {
   final Widget child;
@@ -189,8 +190,11 @@ class _SideMenuTabState extends State<SideMenuTab> {
   bool _isEditing = false;
   String? _selectedEmoji;
   String? _lastText;
+  int? _lastCursorPosition;
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  final _keyboardListenerFocusNode = FocusNode();
+  bool _canDeleteEmoji = true;
 
   @override
   void initState() {
@@ -207,53 +211,28 @@ class _SideMenuTabState extends State<SideMenuTab> {
         setState(() {});
       });
 
-      // Слушаем изменения текста
       _controller.addListener(() {
         final text = _controller.text;
-        print('🔵 TextField: текущий текст: "$text"');
-        print('🔵 TextField: длина текста: ${text.length}');
-        print('🔵 TextField: длина в рунах: ${text.runes.length}');
-        print('🔵 TextField: текущая эмодзи: $_selectedEmoji');
 
-        if (text.isEmpty) {
-          // Удаляем эмодзи ТОЛЬКО если:
-          // 1. Эмодзи существует
-          // 2. Текстовое поле было пустым до этого (значит это backspace)
-          // 3. Курсор в начале поля
-          if (_selectedEmoji != null &&
-              _lastText?.isEmpty == true &&
-              _controller.selection.baseOffset == 0) {
-            print(
-                '🔵 TextField: удаляем эмодзи и возвращаемся к исходному состоянию');
-            setState(() {
-              _selectedEmoji = null;
-              _isEditing = false;
-            });
-
-            // Небольшая задержка перед новым фокусом
-            Future.delayed(const Duration(milliseconds: 50), () {
-              if (mounted) {
-                setState(() => _isEditing = true);
-                _focusNode.requestFocus();
-              }
-            });
-          }
-        } else {
-          if (_selectedEmoji == null) {
-            final isEmojiResult = isEmoji(text);
-            print('🔵 TextField: проверка на эмодзи: $isEmojiResult');
-
-            if (isEmojiResult) {
-              print('🔵 TextField: обнаружена эмодзи, сохраняем: "$text"');
-              final emoji = text;
-              _controller.clear();
-              setState(() {
-                _selectedEmoji = emoji;
-                print('🔵 TextField: эмодзи установлена: $_selectedEmoji');
-              });
+        if (text.isEmpty && _lastText?.isNotEmpty == true) {
+          _canDeleteEmoji = false;
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              setState(() => _canDeleteEmoji = true);
             }
+          });
+        } else if (text.isNotEmpty && _selectedEmoji == null) {
+          final isEmojiResult = isEmoji(text);
+          if (isEmojiResult) {
+            print('🔵 Обнаружена эмодзи, сохраняем: "$text"');
+            final emoji = text;
+            _controller.clear();
+            setState(() {
+              _selectedEmoji = emoji;
+            });
           }
         }
+
         _lastText = text;
       });
     }
@@ -343,7 +322,6 @@ class _SideMenuTabState extends State<SideMenuTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                // Показываем эмодзи если она выбрана
                 if (_selectedEmoji != null) ...[
                   Text(
                     _selectedEmoji!,
@@ -355,37 +333,56 @@ class _SideMenuTabState extends State<SideMenuTab> {
                   const SizedBox(width: 12),
                 ],
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    textCapitalization: TextCapitalization.sentences,
-                    style: TextStyle(
-                      color: AppColors.getPrimaryText(context),
-                      fontSize: 17,
-                      letterSpacing: 0.2,
-                      fontFamily: GoogleFonts.inter().fontFamily,
-                    ),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      hintText: 'Make a Tab',
-                      hintStyle: TextStyle(
-                        color: AppColors.getSecondaryText(context),
-                        fontSize: 17,
-                        letterSpacing: 0.2,
-                        fontFamily: GoogleFonts.inter().fontFamily,
-                      ),
-                    ),
-                    onSubmitted: (value) {
-                      if (value.isNotEmpty && _selectedEmoji != null) {
-                        widget.onCreateTab?.call('$_selectedEmoji $value');
+                  child: RawKeyboardListener(
+                    focusNode: _keyboardListenerFocusNode,
+                    onKey: (event) {
+                      if (event is RawKeyDownEvent &&
+                          event.logicalKey == LogicalKeyboardKey.backspace &&
+                          _controller.text.isEmpty &&
+                          _selectedEmoji != null &&
+                          _lastText?.isEmpty == true &&
+                          _canDeleteEmoji) {
+                        print('🔵 Обнаружено нажатие backspace в пустом поле');
+                        print(
+                            '🔵 Предыдущий текст был пустым: ${_lastText?.isEmpty}');
+                        print('🔵 Удаляем эмодзи по нажатию backspace');
                         setState(() {
-                          _isEditing = false;
-                          _controller.clear();
                           _selectedEmoji = null;
                         });
                       }
                     },
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: TextStyle(
+                        color: AppColors.getPrimaryText(context),
+                        fontSize: 17,
+                        letterSpacing: 0.2,
+                        fontFamily: GoogleFonts.inter().fontFamily,
+                      ),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        hintText: 'Make a Tab',
+                        hintStyle: TextStyle(
+                          color: AppColors.getSecondaryText(context),
+                          fontSize: 17,
+                          letterSpacing: 0.2,
+                          fontFamily: GoogleFonts.inter().fontFamily,
+                        ),
+                      ),
+                      onSubmitted: (value) {
+                        if (value.isNotEmpty && _selectedEmoji != null) {
+                          widget.onCreateTab?.call('$_selectedEmoji $value');
+                          setState(() {
+                            _isEditing = false;
+                            _controller.clear();
+                            _selectedEmoji = null;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
                 if (_controller.text.isNotEmpty) ...[
@@ -529,6 +526,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _keyboardListenerFocusNode.dispose();
     super.dispose();
   }
 }
