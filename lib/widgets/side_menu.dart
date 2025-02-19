@@ -102,27 +102,20 @@ class _SideMenuState extends State<SideMenu> {
                         return Center(
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width * 0.85,
-                            child: index == 0
-                                ? SideMenuTab(
-                                    isCreateTab: true,
-                                    isSelected: _isCreateTabFocused,
-                                    onCreateTab: (String title) {
-                                      Navigator.pop(context);
-                                    },
-                                    onFocusChange: (focused) {
-                                      setState(() {
-                                        _isCreateTabFocused = focused;
-                                      });
-                                    },
-                                    index: index,
-                                    tabsCount: widget.tabs.length + 1,
-                                  )
-                                : SideMenuTab(
-                                    emoji: widget.tabs[index - 1].emoji,
-                                    title: widget.tabs[index - 1].title,
-                                    isSelected: !_isCreateTabFocused &&
-                                        widget.selectedIndex == index - 1,
-                                    onTap: () {
+                            child: SideMenuTab(
+                              emoji: index == 0
+                                  ? null
+                                  : widget.tabs[index - 1].emoji,
+                              title: index == 0
+                                  ? null
+                                  : widget.tabs[index - 1].title,
+                              isSelected: index == 0
+                                  ? _isCreateTabFocused
+                                  : !_isCreateTabFocused &&
+                                      widget.selectedIndex == index - 1,
+                              onTap: index == 0
+                                  ? null
+                                  : () {
                                       print(
                                           '🔵 SideMenu: onTap for index ${index - 1}');
                                       widget.onTabSelected(index - 1);
@@ -132,9 +125,22 @@ class _SideMenuState extends State<SideMenu> {
                                         Navigator.pop(context);
                                       });
                                     },
-                                    index: index,
-                                    tabsCount: widget.tabs.length + 1,
-                                  ),
+                              onCreateTab: index == 0
+                                  ? (String title) {
+                                      Navigator.pop(context);
+                                    }
+                                  : null,
+                              onFocusChange: index == 0
+                                  ? (focused) {
+                                      setState(() {
+                                        _isCreateTabFocused = focused;
+                                      });
+                                    }
+                                  : null,
+                              isCreateTab: index == 0,
+                              index: index,
+                              tabsCount: widget.tabs.length + 1,
+                            ),
                           ),
                         );
                       },
@@ -155,11 +161,11 @@ class SideMenuTab extends StatefulWidget {
   final String? title; // Может быть null для состояния создания
   final bool isSelected;
   final VoidCallback? onTap; // Для обычного таба
-  final Function(String)? onCreateTab; // Для таба создания
   final Function(bool)? onFocusChange; // Для таба создания
   final bool isCreateTab; // Флаг, указывающий, что это таб создания
   final int index;
   final int tabsCount;
+  final Function(String)? onCreateTab; // Для создания нового таба
 
   const SideMenuTab({
     super.key,
@@ -167,11 +173,11 @@ class SideMenuTab extends StatefulWidget {
     this.title,
     required this.isSelected,
     this.onTap,
-    this.onCreateTab,
     this.onFocusChange,
     this.isCreateTab = false,
     required this.index,
     required this.tabsCount,
+    this.onCreateTab,
   });
 
   @override
@@ -181,6 +187,8 @@ class SideMenuTab extends StatefulWidget {
 class _SideMenuTabState extends State<SideMenuTab> {
   bool _visible = false;
   bool _isEditing = false;
+  String? _selectedEmoji;
+  String? _lastText;
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
 
@@ -199,50 +207,88 @@ class _SideMenuTabState extends State<SideMenuTab> {
         setState(() {});
       });
 
-      // Добавляем слушатель изменений текста
+      // Слушаем изменения текста
       _controller.addListener(() {
         final text = _controller.text;
-        print('🔵 TextField: текст изменился на: "$text"');
+        print('🔵 TextField: текущий текст: "$text"');
         print('🔵 TextField: длина текста: ${text.length}');
         print('🔵 TextField: длина в рунах: ${text.runes.length}');
+        print('🔵 TextField: текущая эмодзи: $_selectedEmoji');
 
-        if (text.isNotEmpty && !text.contains(' ')) {
-          // Проверяем, что нет пробела
-          final isFirstCharEmoji = isEmoji(text);
-          print('🔵 TextField: isEmoji: $isFirstCharEmoji');
+        if (text.isEmpty) {
+          // Удаляем эмодзи ТОЛЬКО если:
+          // 1. Эмодзи существует
+          // 2. Текстовое поле было пустым до этого (значит это backspace)
+          // 3. Курсор в начале поля
+          if (_selectedEmoji != null &&
+              _lastText?.isEmpty == true &&
+              _controller.selection.baseOffset == 0) {
+            print(
+                '🔵 TextField: удаляем эмодзи и возвращаемся к исходному состоянию');
+            setState(() {
+              _selectedEmoji = null;
+              _isEditing = false;
+            });
 
-          if (isFirstCharEmoji) {
-            print('🔵 TextField: обнаружена эмодзи, добавляем "A"');
-            _controller.text = '$text A';
-            print('🔵 TextField: новый текст: "${_controller.text}"');
+            // Небольшая задержка перед новым фокусом
+            Future.delayed(const Duration(milliseconds: 50), () {
+              if (mounted) {
+                setState(() => _isEditing = true);
+                _focusNode.requestFocus();
+              }
+            });
+          }
+        } else {
+          if (_selectedEmoji == null) {
+            final isEmojiResult = isEmoji(text);
+            print('🔵 TextField: проверка на эмодзи: $isEmojiResult');
 
-            _controller.selection = TextSelection.fromPosition(
-              TextPosition(offset: _controller.text.length),
-            );
+            if (isEmojiResult) {
+              print('🔵 TextField: обнаружена эмодзи, сохраняем: "$text"');
+              final emoji = text;
+              _controller.clear();
+              setState(() {
+                _selectedEmoji = emoji;
+                print('🔵 TextField: эмодзи установлена: $_selectedEmoji');
+              });
+            }
           }
         }
-        setState(() {});
+        _lastText = text;
       });
     }
   }
 
-  // Новая функция для проверки эмодзи
   bool isEmoji(String text) {
-    if (text.isEmpty) return false;
+    if (text.isEmpty) {
+      print('🔵 isEmoji: текст пустой');
+      return false;
+    }
 
-    // Проверяем длину
-    if (text.runes.length > 2) return false;
+    final runes = text.runes.toList();
+    print('🔵 isEmoji: проверяем текст: "$text"');
+    print('🔵 isEmoji: количество рун: ${runes.length}');
+    print(
+        '🔵 isEmoji: коды: ${runes.map((r) => '0x${r.toRadixString(16)}').join(", ")}');
 
     // Проверяем диапазоны эмодзи
-    for (final rune in text.runes) {
-      if (!((rune >= 0x1F300 && rune <= 0x1F9FF) || // Основные эмодзи
-          (rune >= 0x2600 && rune <= 0x26FF) || // Разные символы
-          (rune >= 0x2700 && rune <= 0x27BF) || // Dingbats
-          (rune >= 0xFE00 && rune <= 0xFE0F))) {
-        // Вариации
+    for (final rune in runes) {
+      final isInRange =
+          (rune >= 0x1F300 && rune <= 0x1F9FF) || // Основные эмодзи
+              (rune >= 0x2600 && rune <= 0x26FF) || // Разные символы
+              (rune >= 0x2700 && rune <= 0x27BF) || // Dingbats
+              (rune >= 0xFE00 && rune <= 0xFE0F); // Вариации
+
+      print(
+          '🔵 isEmoji: руна 0x${rune.toRadixString(16)} ${isInRange ? 'в диапазоне' : 'не в диапазоне'}');
+
+      if (!isInRange) {
+        print('🔵 isEmoji: не эмодзи');
         return false;
       }
     }
+
+    print('🔵 isEmoji: это эмодзи');
     return true;
   }
 
@@ -297,22 +343,17 @@ class _SideMenuTabState extends State<SideMenuTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.add,
-                      size: 18,
-                      color: Colors.black,
+                // Показываем эмодзи если она выбрана
+                if (_selectedEmoji != null) ...[
+                  Text(
+                    _selectedEmoji!,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontFamily: GoogleFonts.inter().fontFamily,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: TextField(
                     controller: _controller,
@@ -336,13 +377,14 @@ class _SideMenuTabState extends State<SideMenuTab> {
                       ),
                     ),
                     onSubmitted: (value) {
-                      if (value.isNotEmpty) {
-                        widget.onCreateTab?.call(value);
+                      if (value.isNotEmpty && _selectedEmoji != null) {
+                        widget.onCreateTab?.call('$_selectedEmoji $value');
+                        setState(() {
+                          _isEditing = false;
+                          _controller.clear();
+                          _selectedEmoji = null;
+                        });
                       }
-                      setState(() {
-                        _isEditing = false;
-                        _controller.clear();
-                      });
                     },
                   ),
                 ),
@@ -351,7 +393,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
                   InkWell(
                     onTap: () {
                       if (_controller.text.isNotEmpty) {
-                        widget.onCreateTab?.call(_controller.text);
+                        widget.onFocusChange?.call(false);
                         setState(() {
                           _isEditing = false;
                           _controller.clear();
@@ -478,195 +520,6 @@ class _SideMenuTabState extends State<SideMenuTab> {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-}
-
-class CreateTabButton extends StatefulWidget {
-  final Function(String) onCreateTab;
-  final Function(bool) onFocusChange;
-  final int index;
-  final int tabsCount;
-
-  const CreateTabButton({
-    super.key,
-    required this.onCreateTab,
-    required this.onFocusChange,
-    required this.index,
-    required this.tabsCount,
-  });
-
-  @override
-  State<CreateTabButton> createState() => _CreateTabButtonState();
-}
-
-class _CreateTabButtonState extends State<CreateTabButton> {
-  bool _isEditing = false;
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
-  bool _visible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration(milliseconds: 50 * widget.index), () {
-      if (mounted) {
-        setState(() => _visible = true);
-      }
-    });
-
-    _focusNode.addListener(() {
-      widget.onFocusChange(_focusNode.hasFocus);
-      setState(() {});
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: -1.0, end: _visible ? 0.0 : -1.0),
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(value * 100, 0),
-          child: Opacity(
-            opacity: value == -1 ? 0 : 1,
-            child: child,
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: SmoothContainer(
-          smoothness: 0.6,
-          borderRadius: BorderRadius.circular(12),
-          color: _focusNode.hasFocus
-              ? AppColors.getSecondaryBackground(context)
-              : AppColors.getPrimaryBackground(context),
-          side: _focusNode.hasFocus
-              ? BorderSide(
-                  color: AppColors.getTertiaryBackground(context),
-                  width: 1,
-                )
-              : BorderSide.none,
-          child: Material(
-            color: Colors.transparent,
-            child: _isEditing
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.add,
-                              size: 18,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            textCapitalization: TextCapitalization.sentences,
-                            style: TextStyle(
-                              color: AppColors.getPrimaryText(context),
-                              fontSize: 17,
-                              letterSpacing: 0.2,
-                              fontFamily: GoogleFonts.inter().fontFamily,
-                            ),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
-                              hintText: 'Make a Tab',
-                              hintStyle: TextStyle(
-                                color: AppColors.getSecondaryText(context),
-                                fontSize: 17,
-                                letterSpacing: 0.2,
-                                fontFamily: GoogleFonts.inter().fontFamily,
-                              ),
-                            ),
-                            onSubmitted: (value) {
-                              if (value.isNotEmpty) {
-                                widget.onCreateTab(value);
-                              }
-                              setState(() {
-                                _isEditing = false;
-                                _controller.clear();
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : InkWell(
-                    onTap: () {
-                      setState(() => _isEditing = true);
-                      Future.delayed(const Duration(milliseconds: 50), () {
-                        _focusNode.requestFocus();
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.add,
-                                size: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Make a Tab',
-                            style: TextStyle(
-                              color: AppColors.getSecondaryText(context),
-                              fontSize: 17,
-                              letterSpacing: 0.2,
-                              fontFamily: GoogleFonts.inter().fontFamily,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-          ),
         ),
       ),
     );
