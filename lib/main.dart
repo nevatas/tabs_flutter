@@ -48,6 +48,9 @@ class HomeScreen extends StatelessWidget {
         onTabSelected: (index) {
           // Обработка выбора таба
         },
+        onCreateTab: (title) {
+          // Здесь можно оставить пустую реализацию, так как основная логика в ChatScreen
+        },
       ),
       drawerEdgeDragWidth: 60, // Ширина области для свайпа
       body: const ChatScreen(),

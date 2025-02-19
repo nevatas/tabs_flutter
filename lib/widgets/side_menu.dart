@@ -49,12 +49,14 @@ class SideMenu extends StatefulWidget {
   final List<TabItem> tabs;
   final int selectedIndex;
   final Function(int) onTabSelected;
+  final Function(String) onCreateTab;
 
   const SideMenu({
     super.key,
     required this.tabs,
     required this.selectedIndex,
     required this.onTabSelected,
+    required this.onCreateTab,
   });
 
   @override
@@ -108,7 +110,7 @@ class _SideMenuState extends State<SideMenu> {
                                   ? null
                                   : widget.tabs[index - 1].emoji,
                               title: index == 0
-                                  ? null
+                                  ? 'Make a Tab'
                                   : widget.tabs[index - 1].title,
                               isSelected: index == 0
                                   ? _isCreateTabFocused
@@ -117,18 +119,17 @@ class _SideMenuState extends State<SideMenu> {
                               onTap: index == 0
                                   ? null
                                   : () {
-                                      print(
-                                          '🔵 SideMenu: onTap for index ${index - 1}');
                                       widget.onTabSelected(index - 1);
-                                      Future.delayed(Duration.zero, () {
-                                        print(
-                                            '🔵 SideMenu: calling Navigator.pop');
-                                        Navigator.pop(context);
-                                      });
+                                      Navigator.pop(context);
                                     },
                               onCreateTab: index == 0
                                   ? (String title) {
-                                      Navigator.pop(context);
+                                      // Создаем новый таб
+                                      widget.onCreateTab(title);
+                                      // Закрываем меню только если контекст все еще валиден
+                                      if (mounted && context.mounted) {
+                                        Navigator.pop(context);
+                                      }
                                     }
                                   : null,
                               onFocusChange: index == 0
@@ -190,7 +191,6 @@ class _SideMenuTabState extends State<SideMenuTab> {
   bool _isEditing = false;
   String? _selectedEmoji;
   String? _lastText;
-  int? _lastCursorPosition;
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   final _keyboardListenerFocusNode = FocusNode();
@@ -382,8 +382,11 @@ class _SideMenuTabState extends State<SideMenuTab> {
                         ),
                       ),
                       onSubmitted: (value) {
-                        if (value.isNotEmpty && _selectedEmoji != null) {
-                          widget.onCreateTab?.call('$_selectedEmoji $value');
+                        if (value.isNotEmpty) {
+                          final title = _selectedEmoji != null
+                              ? '$_selectedEmoji $value'
+                              : value;
+                          widget.onCreateTab?.call(title);
                           setState(() {
                             _isEditing = false;
                             _controller.clear();
@@ -399,20 +402,41 @@ class _SideMenuTabState extends State<SideMenuTab> {
                   SizedBox(
                     width: 24,
                     height: 24,
-                    child: Builder(
-                      builder: (context) {
-                        print(
-                            '🔵 Показываем галочку (текст: "${_controller.text}")');
-                        return SvgPicture.asset(
-                          'assets/icons/tab_check.svg',
-                          width: 24,
-                          height: 24,
-                          colorFilter: ColorFilter.mode(
-                            AppColors.getSecondaryText(context),
-                            BlendMode.srcIn,
-                          ),
-                        );
+                    child: InkWell(
+                      onTap: () {
+                        if (_controller.text.isNotEmpty) {
+                          final tabTitle = _selectedEmoji != null
+                              ? '$_selectedEmoji ${_controller.text}'
+                              : _controller.text;
+
+                          print('🔵 Создаем новый таб: "$tabTitle"');
+                          widget.onCreateTab?.call(tabTitle);
+
+                          setState(() {
+                            _isEditing = false;
+                            _controller.clear();
+                            _selectedEmoji = null;
+                          });
+
+                          // Закрываем клавиатуру
+                          FocusScope.of(context).unfocus();
+                        }
                       },
+                      child: Builder(
+                        builder: (context) {
+                          print(
+                              '🔵 Показываем галочку (текст: "${_controller.text}")');
+                          return SvgPicture.asset(
+                            'assets/icons/tab_check.svg',
+                            width: 24,
+                            height: 24,
+                            colorFilter: ColorFilter.mode(
+                              AppColors.getSecondaryText(context),
+                              BlendMode.srcIn,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],

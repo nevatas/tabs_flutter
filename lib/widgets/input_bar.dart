@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import '../models/message.dart';
+import '../managers/tab_manager.dart';
 
 class InputBar extends StatefulWidget {
   final TextEditingController controller;
@@ -19,7 +19,9 @@ class InputBar extends StatefulWidget {
 
   final VoidCallback onDelete;
 
-  final Function(MessageCategory) onMove;
+  final Function(int) onMove;
+
+  final TabManager tabManager;
 
   const InputBar({
     super.key,
@@ -32,6 +34,7 @@ class InputBar extends StatefulWidget {
     this.selectedCount = 0,
     required this.onDelete,
     required this.onMove,
+    required this.tabManager,
   });
 
   @override
@@ -113,15 +116,16 @@ class _InputBarState extends State<InputBar> {
                 padding: const EdgeInsets.only(right: 16),
                 child: Row(
                   children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.drive_file_move),
-                      onPressed: () => _showMoveDialog(context),
-                      color: AppColors.getPrimaryText(context),
-                      iconSize: 20,
+                    PopupMenuButton<int>(
+                      itemBuilder: (context) => List.generate(
+                        widget.tabManager.tabs.length,
+                        (index) => PopupMenuItem(
+                          value: index,
+                          child: Text(widget.tabManager.tabs[index].title),
+                        ),
+                      ),
+                      onSelected: widget.onMove,
                     ),
-                    const SizedBox(width: 12),
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -196,10 +200,6 @@ class _InputBarState extends State<InputBar> {
       ),
     );
   }
-
-  void _showMoveDialog(BuildContext context) {
-    // ... код диалога перемещения
-  }
 }
 
 class _AttachButton extends StatelessWidget {
@@ -224,7 +224,7 @@ class _AttachButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.16),
+                color: Colors.black.withAlpha(41),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),

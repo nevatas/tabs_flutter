@@ -7,15 +7,16 @@ class CustomPageController extends PageController {
     int initialPage = 0,
     bool keepPage = true,
   }) : super(
-         initialPage: initialPage,
-         keepPage: keepPage,
-       );
+          initialPage: initialPage,
+          keepPage: keepPage,
+        );
 
   Future<void> animateToPageWithoutBuilding(
     int page, {
     required Duration duration,
     required Curve curve,
   }) async {
+    print('🔵 CustomPageController.animateToPageWithoutBuilding: $page');
     _isUserGesture = false;
     super.jumpToPage(page);
   }
@@ -26,6 +27,7 @@ class CustomPageController extends PageController {
     required Duration duration,
     required Curve curve,
   }) {
+    print('🔵 CustomPageController.animateToPage: $page');
     _isUserGesture = false;
     return super.animateToPage(
       page,

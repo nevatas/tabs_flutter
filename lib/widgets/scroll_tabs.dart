@@ -34,14 +34,30 @@ class _ScrollTabsState extends State<ScrollTabs> {
   @override
   void didUpdateWidget(ScrollTabs oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // Обновляем _tabKeys, если изменилось количество табов
+    if (widget.tabs.length != oldWidget.tabs.length) {
+      _tabKeys.clear();
+      _tabKeys.addAll(List.generate(
+        widget.tabs.length,
+        (index) => GlobalKey(),
+      ));
+    }
+
+    // Прокручиваем к выбранному табу
     if (widget.selectedIndex != oldWidget.selectedIndex &&
         widget.selectedIndex != 0) {
-      _scrollToSelectedTab();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToSelectedTab();
+      });
     }
   }
 
   void _scrollToSelectedTab() {
     if (!mounted) return;
+
+    // Проверяем валидность индекса
+    if (widget.selectedIndex >= _tabKeys.length) return;
 
     final context = _tabKeys[widget.selectedIndex].currentContext;
     if (context == null) return;
@@ -69,6 +85,12 @@ class _ScrollTabsState extends State<ScrollTabs> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔵 ScrollTabs.build:');
+    print('  Количество табов: ${widget.tabs.length}');
+    print('  Выбранный индекс: ${widget.selectedIndex}');
+    print(
+        '  Табы: ${widget.tabs.map((t) => "${t.emoji ?? ''} ${t.title}").toList()}');
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getPrimaryBackground(context),
@@ -108,6 +130,7 @@ class _ScrollTabsState extends State<ScrollTabs> {
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
                   builder: (context, value, child) {
+                    final isSelected = widget.selectedIndex == index;
                     return GestureDetector(
                       onTap: () => widget.onTabSelected(index),
                       child: Container(
@@ -136,20 +159,23 @@ class _ScrollTabsState extends State<ScrollTabs> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              widget.tabs[index].emoji,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(width: 8),
+                            if (widget.tabs[index].emoji != null) ...[
+                              Text(
+                                widget.tabs[index].emoji!,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
                             Text(
                               widget.tabs[index].title,
                               style: TextStyle(
-                                color: AppColors.getPrimaryText(context),
-                                fontWeight: FontWeight.lerp(
-                                  FontWeight.normal,
-                                  FontWeight.bold,
-                                  value,
-                                ),
+                                color: isSelected
+                                    ? AppColors.getPrimaryText(context)
+                                    : AppColors.getSecondaryText(context),
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                                 letterSpacing: 0.2,
                               ),
                             ),

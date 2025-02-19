@@ -1,17 +1,19 @@
 class TabItem {
   final String title;
-  final String emoji;
+  final String? emoji;
+  final bool isInbox;
 
   const TabItem({
     required this.title,
-    required this.emoji,
+    this.emoji,
+    this.isInbox = false,
   });
 
-  static const List<TabItem> defaultTabs = [
-    TabItem(title: 'Inbox', emoji: '📥'),
-    TabItem(title: 'Books', emoji: '📚'),
-    TabItem(title: 'Ideas', emoji: '💡'),
-    TabItem(title: 'Words', emoji: '📝'),
-    TabItem(title: 'Quotes', emoji: '💭'),
-  ];
+  static List<TabItem> get defaultTabs => [
+        const TabItem(
+          title: 'Inbox',
+          emoji: '📥',
+          isInbox: true,
+        ),
+      ];
 }

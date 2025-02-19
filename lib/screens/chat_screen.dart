@@ -11,6 +11,7 @@ import '../managers/tab_manager.dart';
 import '../controllers/custom_page_controller.dart';
 import '../theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/tab_item.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -49,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen>
       text: _textController.text,
       isMe: true,
       timestamp: DateTime.now(),
-      category: _tabManager.currentCategory,
+      tabIndex: _tabManager.selectedTabIndex,
     );
 
     _textController.clear();
@@ -57,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {});
 
     final controller =
-        _tabManager.scrollControllers[_tabManager.currentCategory];
+        _tabManager.scrollControllers[_tabManager.selectedTabIndex];
     if (controller?.hasClients ?? false) {
       await controller!.animateTo(
         0,
@@ -67,26 +68,31 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  Widget _buildMessageList(MessageCategory category) {
-    final messages = _messageManager.messagesByCategory[category]!;
+  Widget _buildMessageList(int tabIndex) {
+    final messages = _messageManager.messagesByTabIndex[tabIndex] ?? [];
 
-    if (messages.isEmpty && !_messageManager.isLoading[category]!) {
+    // Инициализируем isLoading, если его еще нет
+    _messageManager.isLoading[tabIndex] ??= false;
+
+    if (messages.isEmpty && !_messageManager.isLoading[tabIndex]!) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _tabManager.tabs[category.index].emoji,
-              style: TextStyle(
-                fontSize: 48,
-                fontFamily: GoogleFonts.inter().fontFamily,
+            if (_tabManager.tabs[tabIndex].emoji != null) ...[
+              Text(
+                _tabManager.tabs[tabIndex].emoji!,
+                style: TextStyle(
+                  fontSize: 48,
+                  fontFamily: GoogleFonts.inter().fontFamily,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
+            ],
             Column(
               children: [
                 Text(
-                  _tabManager.tabs[category.index].title,
+                  _tabManager.tabs[tabIndex].title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.getPrimaryText(context),
@@ -119,20 +125,20 @@ class _ChatScreenState extends State<ChatScreen>
         if (notification is ScrollEndNotification) {
           if (notification.metrics.pixels >=
               notification.metrics.maxScrollExtent * 0.8) {
-            _messageManager.loadMoreMessages(category);
+            _messageManager.loadMoreMessages(tabIndex);
           }
         }
         return false;
       },
       child: ListView.builder(
-        key: PageStorageKey(category),
-        controller: _tabManager.scrollControllers[category],
+        key: PageStorageKey(tabIndex),
+        controller: _tabManager.scrollControllers[tabIndex],
         reverse: true,
         padding: const EdgeInsets.all(16),
         shrinkWrap: true,
         clipBehavior: Clip.none,
         itemCount:
-            messages.length + (_messageManager.isLoading[category]! ? 1 : 0),
+            messages.length + (_messageManager.isLoading[tabIndex]! ? 1 : 0),
         itemBuilder: (context, index) {
           final messageIndex = messages.length - 1 - index;
 
@@ -178,14 +184,58 @@ class _ChatScreenState extends State<ChatScreen>
           tabs: _tabManager.tabs,
           selectedIndex: _tabManager.selectedTabIndex,
           onTabSelected: (index) {
-            print('🔵 ChatScreen: onTabSelected with index $index');
-            print(
-                '🔵 ChatScreen: current tab index before: ${_tabManager.selectedTabIndex}');
             setState(() {
               _tabManager.handleTabSelection(index, fromDrawer: true);
             });
-            print(
-                '🔵 ChatScreen: current tab index after: ${_tabManager.selectedTabIndex}');
+          },
+          onCreateTab: (title) {
+            print('🔵 ChatScreen.onCreateTab:');
+            print('  Входящий title: $title');
+
+            setState(() {
+              final parts = title.split(' ');
+              String? emoji;
+              String tabTitle;
+
+              if (parts.isNotEmpty && isEmoji(parts.first)) {
+                emoji = parts.first;
+                tabTitle = parts.skip(1).join(' ');
+              } else {
+                emoji = null;
+                tabTitle = title;
+              }
+
+              print('  Разобранные данные:');
+              print('    emoji: $emoji');
+              print('    tabTitle: $tabTitle');
+
+              if (tabTitle.isEmpty) {
+                print('  ⚠️ Пустое название таба, отмена создания');
+                return;
+              }
+
+              final newTab = TabItem(
+                emoji: emoji,
+                title: tabTitle,
+              );
+
+              final newTabs = List<TabItem>.from(_tabManager.tabs);
+              final newIndex = newTabs.length;
+              print('  Текущее количество табов: ${_tabManager.tabs.length}');
+              print('  Новый индекс: $newIndex');
+
+              newTabs.add(newTab);
+
+              // Сначала обновляем список табов
+              _tabManager.updateTabs(newTabs);
+
+              // Затем инициализируем новый таб
+              _messageManager.messagesByTabIndex[newIndex] ??= [];
+              _messageManager.isLoading[newIndex] = false;
+
+              // И только потом переключаемся на новый таб через handleTabSelection
+              _tabManager.handleTabSelection(newIndex, fromDrawer: true);
+            });
           },
         ),
         drawerEnableOpenDragGesture: false,
@@ -228,15 +278,26 @@ class _ChatScreenState extends State<ChatScreen>
                     children: [
                       PageView.builder(
                         controller: _tabManager.pageController,
-                        itemCount: MessageCategory.values.length,
+                        itemCount: _tabManager.tabs.length,
                         onPageChanged: (index) {
+                          print('🔵 PageView.onPageChanged:');
+                          print('  Новый индекс: $index');
+                          print(
+                              '  Текущий индекс TabManager: ${_tabManager.selectedTabIndex}');
+
                           setState(() {
                             _tabManager.selectedTabIndex = index;
+                            // Убедимся, что у нас есть массив сообщений для этого таба
+                            _messageManager.messagesByTabIndex[index] ??= [];
+                            _messageManager.isLoading[index] ??= false;
                           });
                         },
                         itemBuilder: (context, index) {
-                          final category = MessageCategory.values[index];
-                          return _buildMessageList(category);
+                          print('🔵 PageView.itemBuilder:');
+                          print('  Строим страницу для индекса: $index');
+                          print(
+                              '  Количество сообщений: ${_messageManager.messagesByTabIndex[index]?.length ?? 0}');
+                          return _buildMessageList(index);
                         },
                       ),
                       AnimatedPositioned(
@@ -268,6 +329,7 @@ class _ChatScreenState extends State<ChatScreen>
                   hintText: 'Новая заметка...',
                   isSelectionMode: _messageManager.isSelectionMode,
                   selectedCount: _messageManager.selectedMessages.length,
+                  tabManager: _tabManager,
                   onDelete: () async {
                     for (var message in _messageManager.selectedMessages) {
                       await _messageManager.deleteMessage(message);
@@ -276,9 +338,9 @@ class _ChatScreenState extends State<ChatScreen>
                       _messageManager.toggleSelectionMode();
                     });
                   },
-                  onMove: (category) async {
+                  onMove: (index) async {
                     for (var message in _messageManager.selectedMessages) {
-                      await _messageManager.moveMessage(message, category);
+                      await _messageManager.moveMessage(message, index);
                     }
                     setState(() {
                       _messageManager.toggleSelectionMode();
@@ -299,5 +361,25 @@ class _ChatScreenState extends State<ChatScreen>
     _textController.dispose();
     _tabManager.dispose();
     super.dispose();
+  }
+
+  bool isEmoji(String text) {
+    if (text.isEmpty) return false;
+
+    final runes = text.runes.toList();
+
+    for (final rune in runes) {
+      final isInRange =
+          (rune >= 0x1F300 && rune <= 0x1F9FF) || // Основные эмодзи
+              (rune >= 0x2600 && rune <= 0x26FF) || // Разные символы
+              (rune >= 0x2700 && rune <= 0x27BF) || // Dingbats
+              (rune >= 0xFE00 && rune <= 0xFE0F); // Вариации
+
+      if (!isInRange) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

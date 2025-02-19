@@ -16,8 +16,8 @@ class StorageService {
     }
   }
 
-  Future<Directory> _getCategoryDir(MessageCategory category) async {
-    final dir = Directory(path.join(_baseDir.path, category.name));
+  Future<Directory> _getTabDir(int tabIndex) async {
+    final dir = Directory(path.join(_baseDir.path, 'tab_$tabIndex'));
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -25,15 +25,15 @@ class StorageService {
   }
 
   Future<void> saveMessage(Message message) async {
-    final categoryDir = await _getCategoryDir(message.category);
+    final tabDir = await _getTabDir(message.tabIndex);
     final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
-    final file = File(path.join(categoryDir.path, fileName));
+    final file = File(path.join(tabDir.path, fileName));
 
     // Создаем markdown контент
     final content = '''
 ---
 timestamp: ${message.timestamp.toIso8601String()}
-category: ${message.category.name}
+tabIndex: ${message.tabIndex}
 isMe: ${message.isMe}
 ---
 
@@ -44,19 +44,19 @@ ${message.text}
   }
 
   Future<List<Message>> loadMessages(
-    MessageCategory category, {
+    int tabIndex, {
     int limit = 20,
     DateTime? before,
   }) async {
-    final categoryDir = await _getCategoryDir(category);
-    final files = await categoryDir
+    final tabDir = await _getTabDir(tabIndex);
+    final files = await tabDir
         .list()
         .where((entity) =>
             entity is File && path.extension(entity.path) == _extension)
         .toList();
 
     // Сортируем файлы по имени (timestamp) в обратном порядке
-    files.sort((a, b) => a.path.compareTo(b.path));
+    files.sort((a, b) => b.path.compareTo(a.path));
 
     // Применяем пагинацию
     if (before != null) {
@@ -73,7 +73,7 @@ ${message.text}
       final file = files[i] as File;
       try {
         final content = await file.readAsString();
-        final message = _parseMessageFromMd(content, category);
+        final message = _parseMessageFromMd(content);
         messages.add(message);
       } catch (e) {
         print('Error reading file: ${file.path}');
@@ -84,9 +84,8 @@ ${message.text}
     return messages;
   }
 
-  Future<void> moveMessage(Message message, MessageCategory newCategory) async {
-    final oldDir = await _getCategoryDir(message.category);
-
+  Future<void> moveMessage(Message message, int newTabIndex) async {
+    final oldDir = await _getTabDir(message.tabIndex);
     final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
     final oldFile = File(path.join(oldDir.path, fileName));
     // Убираем неиспользуемую переменную newFile
@@ -96,25 +95,27 @@ ${message.text}
       text: message.text,
       isMe: message.isMe,
       timestamp: message.timestamp,
-      category: newCategory,
+      tabIndex: newTabIndex,
     );
 
     // Сохраняем новое сообщение и удаляем старое
     await saveMessage(newMessage);
-    await oldFile.delete();
+    if (await oldFile.exists()) {
+      await oldFile.delete();
+    }
   }
 
   Future<void> deleteMessage(Message message) async {
-    final categoryDir = await _getCategoryDir(message.category);
+    final tabDir = await _getTabDir(message.tabIndex);
     final fileName = '${message.timestamp.millisecondsSinceEpoch}$_extension';
-    final file = File(path.join(categoryDir.path, fileName));
+    final file = File(path.join(tabDir.path, fileName));
 
     if (await file.exists()) {
       await file.delete();
     }
   }
 
-  Message _parseMessageFromMd(String content, MessageCategory category) {
+  Message _parseMessageFromMd(String content) {
     final parts = content.split('---');
     if (parts.length < 3) {
       throw FormatException('Invalid markdown format');
@@ -124,6 +125,7 @@ ${message.text}
     final metadata = parts[1].trim().split('\n');
     DateTime? timestamp;
     bool isMe = false;
+    int tabIndex = 0;
 
     for (final line in metadata) {
       final keyValue = line.split(': ');
@@ -139,6 +141,9 @@ ${message.text}
         case 'isMe':
           isMe = value.toLowerCase() == 'true';
           break;
+        case 'tabIndex':
+          tabIndex = int.parse(value);
+          break;
       }
     }
 
@@ -153,16 +158,16 @@ ${message.text}
       text: text,
       isMe: isMe,
       timestamp: timestamp,
-      category: category,
+      tabIndex: tabIndex,
     );
   }
 
   Future<bool> hasMoreMessages(
-    MessageCategory category,
+    int tabIndex,
     DateTime before,
   ) async {
-    final categoryDir = await _getCategoryDir(category);
-    final files = await categoryDir
+    final tabDir = await _getTabDir(tabIndex);
+    final files = await tabDir
         .list()
         .where((entity) =>
             entity is File &&
