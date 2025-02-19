@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/custom_page_controller.dart';
 import '../models/tab_item.dart';
+import 'package:flutter/services.dart';
 
 class TabManager {
   List<TabItem> _tabs = TabItem.defaultTabs;

@@ -12,6 +12,7 @@ import '../controllers/custom_page_controller.dart';
 import '../theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/tab_item.dart';
+import 'package:flutter/services.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -285,6 +286,8 @@ class _ChatScreenState extends State<ChatScreen>
                           print(
                               '  Текущий индекс TabManager: ${_tabManager.selectedTabIndex}');
 
+                          HapticFeedback.selectionClick();
+                          
                           setState(() {
                             _tabManager.selectedTabIndex = index;
                             // Убедимся, что у нас есть массив сообщений для этого таба

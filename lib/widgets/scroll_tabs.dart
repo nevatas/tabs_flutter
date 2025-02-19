@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../models/tab_item.dart';
+import 'package:flutter/services.dart';
 
 class ScrollTabs extends StatefulWidget {
   final List<TabItem> tabs;
@@ -83,6 +84,10 @@ class _ScrollTabsState extends State<ScrollTabs> {
     );
   }
 
+  void _handleTabTap(int index) {
+    widget.onTabSelected(index);
+  }
+
   @override
   Widget build(BuildContext context) {
     print('🔵 ScrollTabs.build:');
@@ -132,7 +137,7 @@ class _ScrollTabsState extends State<ScrollTabs> {
                   builder: (context, value, child) {
                     final isSelected = widget.selectedIndex == index;
                     return GestureDetector(
-                      onTap: () => widget.onTabSelected(index),
+                      onTap: () => _handleTabTap(index),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
