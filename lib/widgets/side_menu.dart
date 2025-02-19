@@ -297,19 +297,21 @@ class _SideMenuTabState extends State<SideMenuTab> {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: SmoothContainer(
-          smoothness: 0.6,
-          borderRadius: BorderRadius.circular(12),
-          color:
-              (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
-                  ? AppColors.getSecondaryBackground(context)
-                  : AppColors.getPrimaryBackground(context),
-          side: (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
-              ? BorderSide(
-                  color: AppColors.getTertiaryBackground(context),
-                  width: 1,
-                )
-              : BorderSide.none,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
+                ? AppColors.getSecondaryBackground(context).withOpacity(1.0)
+                : AppColors.getPrimaryBackground(context).withOpacity(0.0),
+            border: (widget.isCreateTab && _focusNode.hasFocus) || widget.isSelected
+                ? Border.all(
+                    color: AppColors.getTertiaryBackground(context),
+                    width: 1,
+                  )
+                : null,
+          ),
           child: Material(
             color: Colors.transparent,
             child: widget.isCreateTab
@@ -444,11 +446,17 @@ class _SideMenuTabState extends State<SideMenuTab> {
             ),
           )
         : InkWell(
-            onTap: () {
-              setState(() => _isEditing = true);
-              Future.delayed(const Duration(milliseconds: 50), () {
-                _focusNode.requestFocus();
-              });
+            onTap: () async {
+              // Сначала запрашиваем фокус
+              _focusNode.requestFocus();
+              
+              // Ждем немного, чтобы клавиатура начала появляться
+              await Future.delayed(const Duration(milliseconds: 50));
+              
+              // Затем активируем режим редактирования
+              if (mounted) {
+                setState(() => _isEditing = true);
+              }
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -491,10 +499,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
 
   Widget _buildNormalTab(BuildContext context) {
     return InkWell(
-      onTap: () {
-        print('🔵 SideMenuTab: onTap called');
-        widget.onTap?.call();
-      },
+      onTap: widget.onTap,  // Упрощаем, так как логика создания таба перенесена в _buildCreateTab
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 20,
