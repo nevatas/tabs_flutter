@@ -37,11 +37,31 @@ class _ChatScreenState extends State<ChatScreen>
       pageController: CustomPageController(),
     );
 
+    _focusNode.addListener(_onFocusChanged);
+
     _messageManager.initialize().then((_) {
       if (mounted) {
         setState(() {});
       }
     });
+  }
+
+  void _onFocusChanged() {
+    if (_focusNode.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final controller = _tabManager.scrollControllers[_tabManager.selectedTabIndex];
+        if (controller?.hasClients ?? false) {
+          final position = controller!.position;
+          if (position.pixels > position.maxScrollExtent - 300) {
+            controller.animateTo(
+              position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        }
+      });
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -55,27 +75,28 @@ class _ChatScreenState extends State<ChatScreen>
     );
 
     _textController.clear();
+    
+    // Сначала добавляем сообщение в список
     await _messageManager.sendMessage(message);
     setState(() {});
 
-    final controller =
-        _tabManager.scrollControllers[_tabManager.selectedTabIndex];
-    if (controller?.hasClients ?? false) {
-      await controller!.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    // Затем ждем следующего кадра для корректного скролла
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = _tabManager.scrollControllers[_tabManager.selectedTabIndex];
+      if (controller?.hasClients ?? false) {
+        controller!.animateTo(
+          controller.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Widget _buildMessageList(int tabIndex) {
     final messages = _messageManager.messagesByTabIndex[tabIndex] ?? [];
 
-    // Инициализируем isLoading, если его еще нет
-    _messageManager.isLoading[tabIndex] ??= false;
-
-    if (messages.isEmpty && !_messageManager.isLoading[tabIndex]!) {
+    if (messages.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -121,56 +142,37 @@ class _ChatScreenState extends State<ChatScreen>
       );
     }
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification is ScrollEndNotification) {
-          if (notification.metrics.pixels >=
-              notification.metrics.maxScrollExtent * 0.8) {
-            _messageManager.loadMoreMessages(tabIndex);
-          }
-        }
-        return false;
-      },
-      child: ListView.builder(
-        key: PageStorageKey(tabIndex),
-        controller: _tabManager.scrollControllers[tabIndex],
-        reverse: true,
-        padding: const EdgeInsets.all(16),
-        shrinkWrap: true,
-        clipBehavior: Clip.none,
-        itemCount:
-            messages.length + (_messageManager.isLoading[tabIndex]! ? 1 : 0),
-        itemBuilder: (context, index) {
-          final messageIndex = messages.length - 1 - index;
-
-          if (messageIndex < 0) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-
-          return MessageBubble(
-            message: messages[messageIndex],
-            isSelectionMode: _messageManager.isSelectionMode,
-            isSelected: _messageManager.selectedMessages
-                .contains(messages[messageIndex]),
-            onLongPress: () {
-              setState(() {
-                _messageManager.toggleSelectionMode();
-                _messageManager.toggleMessageSelection(messages[messageIndex]);
-              });
-            },
-            onSelect: () {
-              setState(() {
-                _messageManager.toggleMessageSelection(messages[messageIndex]);
-              });
-            },
-          );
-        },
+    return ListView.builder(
+      key: PageStorageKey(tabIndex),
+      controller: _tabManager.scrollControllers[tabIndex],
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: 16,
       ),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        return MessageBubble(
+          message: messages[index],
+          isSelectionMode: _messageManager.isSelectionMode,
+          isSelected: _messageManager.selectedMessages.contains(messages[index]),
+          onLongPress: () {
+            setState(() {
+              _messageManager.toggleSelectionMode();
+              _messageManager.toggleMessageSelection(messages[index]);
+            });
+          },
+          onSelect: () {
+            setState(() {
+              _messageManager.toggleMessageSelection(messages[index]);
+            });
+          },
+        );
+      },
     );
   }
 
@@ -226,15 +228,11 @@ class _ChatScreenState extends State<ChatScreen>
               print('  Новый индекс: $newIndex');
 
               newTabs.add(newTab);
-
-              // Сначала обновляем список табов
               _tabManager.updateTabs(newTabs);
-
-              // Затем инициализируем новый таб
+              
+              // Инициализируем пустой список сообщений для нового таба
               _messageManager.messagesByTabIndex[newIndex] ??= [];
-              _messageManager.isLoading[newIndex] = false;
-
-              // И только потом переключаемся на новый таб через handleTabSelection
+              
               _tabManager.handleTabSelection(newIndex, fromDrawer: true);
             });
           },
@@ -283,16 +281,14 @@ class _ChatScreenState extends State<ChatScreen>
                         onPageChanged: (index) {
                           print('🔵 PageView.onPageChanged:');
                           print('  Новый индекс: $index');
-                          print(
-                              '  Текущий индекс TabManager: ${_tabManager.selectedTabIndex}');
+                          print('  Текущий индекс TabManager: ${_tabManager.selectedTabIndex}');
 
                           HapticFeedback.selectionClick();
                           
                           setState(() {
                             _tabManager.selectedTabIndex = index;
-                            // Убедимся, что у нас есть массив сообщений для этого таба
+                            // Инициализируем пустой список сообщений для таба, если его еще нет
                             _messageManager.messagesByTabIndex[index] ??= [];
-                            _messageManager.isLoading[index] ??= false;
                           });
                         },
                         itemBuilder: (context, index) {
@@ -360,6 +356,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
     _textController.dispose();
     _tabManager.dispose();

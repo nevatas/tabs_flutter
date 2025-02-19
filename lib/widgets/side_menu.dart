@@ -298,7 +298,7 @@ class _SideMenuTabState extends State<SideMenuTab> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 450),
           curve: Curves.easeInOut,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
