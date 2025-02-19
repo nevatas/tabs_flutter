@@ -29,25 +29,25 @@ class _ScrollTabsState extends State<ScrollTabs> {
       widget.tabs.length,
       (index) => GlobalKey(),
     ));
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToSelectedTab();
-    });
   }
 
   @override
   void didUpdateWidget(ScrollTabs oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.selectedIndex != oldWidget.selectedIndex) {
+    if (widget.selectedIndex != oldWidget.selectedIndex &&
+        widget.selectedIndex != 0) {
       _scrollToSelectedTab();
     }
   }
 
   void _scrollToSelectedTab() {
-    final RenderBox tabBox = _tabKeys[widget.selectedIndex]
-        .currentContext
-        ?.findRenderObject() as RenderBox;
-    final RenderBox listBox = context.findRenderObject() as RenderBox;
+    if (!mounted) return;
+
+    final context = _tabKeys[widget.selectedIndex].currentContext;
+    if (context == null) return;
+
+    final RenderBox tabBox = context.findRenderObject() as RenderBox;
+    final RenderBox listBox = this.context.findRenderObject() as RenderBox;
 
     final double tabCenter =
         tabBox.localToGlobal(Offset.zero).dx + tabBox.size.width / 2;

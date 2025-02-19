@@ -201,9 +201,49 @@ class _SideMenuTabState extends State<SideMenuTab> {
 
       // Добавляем слушатель изменений текста
       _controller.addListener(() {
-        setState(() {}); // Обновляем UI при изменении текста
+        final text = _controller.text;
+        print('🔵 TextField: текст изменился на: "$text"');
+        print('🔵 TextField: длина текста: ${text.length}');
+        print('🔵 TextField: длина в рунах: ${text.runes.length}');
+
+        if (text.isNotEmpty && !text.contains(' ')) {
+          // Проверяем, что нет пробела
+          final isFirstCharEmoji = isEmoji(text);
+          print('🔵 TextField: isEmoji: $isFirstCharEmoji');
+
+          if (isFirstCharEmoji) {
+            print('🔵 TextField: обнаружена эмодзи, добавляем "A"');
+            _controller.text = '$text A';
+            print('🔵 TextField: новый текст: "${_controller.text}"');
+
+            _controller.selection = TextSelection.fromPosition(
+              TextPosition(offset: _controller.text.length),
+            );
+          }
+        }
+        setState(() {});
       });
     }
+  }
+
+  // Новая функция для проверки эмодзи
+  bool isEmoji(String text) {
+    if (text.isEmpty) return false;
+
+    // Проверяем длину
+    if (text.runes.length > 2) return false;
+
+    // Проверяем диапазоны эмодзи
+    for (final rune in text.runes) {
+      if (!((rune >= 0x1F300 && rune <= 0x1F9FF) || // Основные эмодзи
+          (rune >= 0x2600 && rune <= 0x26FF) || // Разные символы
+          (rune >= 0x2700 && rune <= 0x27BF) || // Dingbats
+          (rune >= 0xFE00 && rune <= 0xFE0F))) {
+        // Вариации
+        return false;
+      }
+    }
+    return true;
   }
 
   @override
