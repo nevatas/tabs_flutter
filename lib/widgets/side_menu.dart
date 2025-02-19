@@ -213,27 +213,36 @@ class _SideMenuTabState extends State<SideMenuTab> {
 
       _controller.addListener(() {
         final text = _controller.text;
+        print('\n🔵 -------- TextField Event --------');
+        print('🔵 Текущий текст: "$text"');
+        print('🔵 Есть эмодзи: ${_selectedEmoji != null}');
+        print('🔵 Должна показываться галочка: ${text.isNotEmpty}');
 
         if (text.isEmpty && _lastText?.isNotEmpty == true) {
           _canDeleteEmoji = false;
+          print('🔵 Блокируем удаление эмодзи на 200мс');
           Future.delayed(const Duration(milliseconds: 200), () {
             if (mounted) {
               setState(() => _canDeleteEmoji = true);
+              print('🔵 Разрешаем удаление эмодзи');
             }
           });
         } else if (text.isNotEmpty && _selectedEmoji == null) {
           final isEmojiResult = isEmoji(text);
           if (isEmojiResult) {
-            print('🔵 Обнаружена эмодзи, сохраняем: "$text"');
+            print('🔵 Обнаружена эмодзи в тексте: "$text"');
             final emoji = text;
             _controller.clear();
             setState(() {
               _selectedEmoji = emoji;
+              print('🔵 Установлена эмодзи: $_selectedEmoji');
             });
           }
         }
 
         _lastText = text;
+        setState(() {});
+        print('🔵 --------------------------------\n');
       });
     }
   }
@@ -387,28 +396,23 @@ class _SideMenuTabState extends State<SideMenuTab> {
                 ),
                 if (_controller.text.isNotEmpty) ...[
                   const SizedBox(width: 16),
-                  InkWell(
-                    onTap: () {
-                      if (_controller.text.isNotEmpty) {
-                        widget.onFocusChange?.call(false);
-                        setState(() {
-                          _isEditing = false;
-                          _controller.clear();
-                        });
-                      }
-                    },
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: SvgPicture.asset(
-                        'assets/icons/tab_check.svg',
-                        width: 24,
-                        height: 24,
-                        colorFilter: ColorFilter.mode(
-                          AppColors.getSecondaryText(context),
-                          BlendMode.srcIn,
-                        ),
-                      ),
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Builder(
+                      builder: (context) {
+                        print(
+                            '🔵 Показываем галочку (текст: "${_controller.text}")');
+                        return SvgPicture.asset(
+                          'assets/icons/tab_check.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            AppColors.getSecondaryText(context),
+                            BlendMode.srcIn,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
