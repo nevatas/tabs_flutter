@@ -31,8 +31,8 @@ class CustomPageController extends PageController {
     _isUserGesture = false;
     return super.animateToPage(
       page,
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeIn,
+      duration: duration,
+      curve: curve,
     );
   }
 

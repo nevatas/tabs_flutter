@@ -28,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen>
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   double? _dragStartX;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -187,174 +188,157 @@ class _ChatScreenState extends State<ChatScreen>
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
+        key: _scaffoldKey,
         resizeToAvoidBottomInset: true,
         backgroundColor: AppColors.getPrimaryBackground(context),
-        drawer: SideMenu(
-          tabs: _tabManager.tabs,
-          selectedIndex: _tabManager.selectedTabIndex,
-          onTabSelected: (index) {
-            setState(() {
-              _tabManager.handleTabSelection(index, fromDrawer: true);
-            });
-          },
-          onCreateTab: (title) {
-            print('🔵 ChatScreen.onCreateTab:');
-            print('  Входящий title: $title');
+        drawer: Builder(
+          builder: (context) => SideMenu(
+            tabs: _tabManager.tabs,
+            selectedIndex: _tabManager.selectedTabIndex,
+            onTabSelected: (index) {
+              setState(() {
+                _tabManager.handleTabSelection(index, fromDrawer: true);
+              });
+            },
+            onCreateTab: (title) {
+              print('🔵 ChatScreen.onCreateTab:');
+              print('  Входящий title: $title');
 
-            setState(() {
-              final parts = title.split(' ');
-              String? emoji;
-              String tabTitle;
+              setState(() {
+                final parts = title.split(' ');
+                String? emoji;
+                String tabTitle;
 
-              if (parts.isNotEmpty && isEmoji(parts.first)) {
-                emoji = parts.first;
-                tabTitle = parts.skip(1).join(' ');
-              } else {
-                emoji = null;
-                tabTitle = title;
-              }
+                if (parts.isNotEmpty && isEmoji(parts.first)) {
+                  emoji = parts.first;
+                  tabTitle = parts.skip(1).join(' ');
+                } else {
+                  emoji = null;
+                  tabTitle = title;
+                }
 
-              print('  Разобранные данные:');
-              print('    emoji: $emoji');
-              print('    tabTitle: $tabTitle');
+                print('  Разобранные данные:');
+                print('    emoji: $emoji');
+                print('    tabTitle: $tabTitle');
 
-              if (tabTitle.isEmpty) {
-                print('  ⚠️ Пустое название таба, отмена создания');
-                return;
-              }
+                if (tabTitle.isEmpty) {
+                  print('  ⚠️ Пустое название таба, отмена создания');
+                  return;
+                }
 
-              final newTab = TabItem(
-                emoji: emoji,
-                title: tabTitle,
-              );
+                final newTab = TabItem(
+                  emoji: emoji,
+                  title: tabTitle,
+                );
 
-              final newTabs = List<TabItem>.from(_tabManager.tabs);
-              final newIndex = newTabs.length;
-              print('  Текущее количество табов: ${_tabManager.tabs.length}');
-              print('  Новый индекс: $newIndex');
+                final newTabs = List<TabItem>.from(_tabManager.tabs);
+                final newIndex = newTabs.length;
+                print('  Текущее количество табов: ${_tabManager.tabs.length}');
+                print('  Новый индекс: $newIndex');
 
-              newTabs.add(newTab);
-              _tabManager.updateTabs(newTabs);
-              
-              // Инициализируем пустой список сообщений для нового таба
-              _messageManager.messagesByTabIndex[newIndex] ??= [];
-              
-              _tabManager.handleTabSelection(newIndex, fromDrawer: true);
-            });
-          },
+                newTabs.add(newTab);
+                _tabManager.updateTabs(newTabs);
+                
+                _messageManager.messagesByTabIndex[newIndex] ??= [];
+                
+                _tabManager.handleTabSelection(newIndex, fromDrawer: true);
+              });
+            },
+          ),
         ),
-        drawerEnableOpenDragGesture: false,
-        body: SafeArea(
-          child: GestureDetector(
-            onHorizontalDragStart: (details) {
-              if (_tabManager.selectedTabIndex == 0) {
-                _dragStartX = details.globalPosition.dx;
-              }
-            },
-            onHorizontalDragUpdate: (details) {
-              if (_tabManager.selectedTabIndex == 0 &&
-                  _dragStartX != null &&
-                  details.globalPosition.dx - _dragStartX! > 50) {
-                _dragStartX = null;
-                Scaffold.of(context).openDrawer();
-              }
-            },
-            onHorizontalDragEnd: (_) {
-              _dragStartX = null;
-            },
-            child: Column(
-              children: [
-                Builder(
-                  builder: (context) => Header(
-                    onMenuPressed: () {
-                      _focusNode.unfocus();
-                      Scaffold.of(context).openDrawer();
-                    },
+        drawerEnableOpenDragGesture: true,
+        drawerEdgeDragWidth: 60,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  Builder(
+                    builder: (context) => Header(
+                      onMenuPressed: () {
+                        _focusNode.unfocus();
+                        _scaffoldKey.currentState?.openDrawer();
+                      },
+                      isSelectionMode: _messageManager.isSelectionMode,
+                      onExitSelectionMode: () {
+                        setState(() {
+                          _messageManager.toggleSelectionMode();
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        PageView.builder(
+                          controller: _tabManager.pageController,
+                          // Убираем ограничение на свайпы
+                          physics: const PageScrollPhysics(),
+                          itemCount: _tabManager.tabs.length,
+                          onPageChanged: (index) {
+                            print('🟦 PAGE VIEW - Page Changed:');
+                            print('  New Index: $index');
+                            print('  Previous Index: ${_tabManager.selectedTabIndex}');
+                            
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _tabManager.selectedTabIndex = index;
+                              _messageManager.messagesByTabIndex[index] ??= [];
+                            });
+                          },
+                          itemBuilder: (context, index) => _buildMessageList(index),
+                        ),
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          top: _messageManager.isSelectionMode ? -56 : 0,
+                          left: 0,
+                          right: 0,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: _messageManager.isSelectionMode ? 0 : 1,
+                            child: ScrollTabs(
+                              tabs: _tabManager.tabs,
+                              selectedIndex: _tabManager.selectedTabIndex,
+                              onTabSelected: (index) => setState(() {
+                                _tabManager.handleTabSelection(index);
+                              }),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  InputBar(
+                    controller: _textController,
+                    focusNode: _focusNode,
+                    onSendPressed: _sendMessage,
+                    onAttachPressed: () {},
+                    hintText: 'Новая заметка...',
                     isSelectionMode: _messageManager.isSelectionMode,
-                    onExitSelectionMode: () {
+                    selectedCount: _messageManager.selectedMessages.length,
+                    tabManager: _tabManager,
+                    onDelete: () async {
+                      for (var message in _messageManager.selectedMessages) {
+                        await _messageManager.deleteMessage(message);
+                      }
+                      setState(() {
+                        _messageManager.toggleSelectionMode();
+                      });
+                    },
+                    onMove: (index) async {
+                      for (var message in _messageManager.selectedMessages) {
+                        await _messageManager.moveMessage(message, index);
+                      }
                       setState(() {
                         _messageManager.toggleSelectionMode();
                       });
                     },
                   ),
-                ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _tabManager.pageController,
-                        itemCount: _tabManager.tabs.length,
-                        onPageChanged: (index) {
-                          print('🔵 PageView.onPageChanged:');
-                          print('  Новый индекс: $index');
-                          print('  Текущий индекс TabManager: ${_tabManager.selectedTabIndex}');
-
-                          HapticFeedback.selectionClick();
-                          
-                          setState(() {
-                            _tabManager.selectedTabIndex = index;
-                            // Инициализируем пустой список сообщений для таба, если его еще нет
-                            _messageManager.messagesByTabIndex[index] ??= [];
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          print('🔵 PageView.itemBuilder:');
-                          print('  Строим страницу для индекса: $index');
-                          print(
-                              '  Количество сообщений: ${_messageManager.messagesByTabIndex[index]?.length ?? 0}');
-                          return _buildMessageList(index);
-                        },
-                      ),
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        top: _messageManager.isSelectionMode ? -56 : 0,
-                        left: 0,
-                        right: 0,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _messageManager.isSelectionMode ? 0 : 1,
-                          child: ScrollTabs(
-                            tabs: _tabManager.tabs,
-                            selectedIndex: _tabManager.selectedTabIndex,
-                            onTabSelected: (index) => setState(() {
-                              _tabManager.handleTabSelection(index);
-                            }),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                InputBar(
-                  controller: _textController,
-                  focusNode: _focusNode,
-                  onSendPressed: _sendMessage,
-                  onAttachPressed: () {},
-                  hintText: 'Новая заметка...',
-                  isSelectionMode: _messageManager.isSelectionMode,
-                  selectedCount: _messageManager.selectedMessages.length,
-                  tabManager: _tabManager,
-                  onDelete: () async {
-                    for (var message in _messageManager.selectedMessages) {
-                      await _messageManager.deleteMessage(message);
-                    }
-                    setState(() {
-                      _messageManager.toggleSelectionMode();
-                    });
-                  },
-                  onMove: (index) async {
-                    for (var message in _messageManager.selectedMessages) {
-                      await _messageManager.moveMessage(message, index);
-                    }
-                    setState(() {
-                      _messageManager.toggleSelectionMode();
-                    });
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
