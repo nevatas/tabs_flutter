@@ -97,6 +97,7 @@ class _ScrollTabsState extends State<ScrollTabs> {
         '  Табы: ${widget.tabs.map((t) => "${t.emoji ?? ''} ${t.title}").toList()}');
 
     return Container(
+      height: 56, // Фиксированная высота для всего ScrollTabs
       decoration: BoxDecoration(
         color: AppColors.getPrimaryBackground(context),
         boxShadow: [
@@ -139,52 +140,58 @@ class _ScrollTabsState extends State<ScrollTabs> {
                     return GestureDetector(
                       onTap: () => _handleTabTap(index),
                       child: Container(
+                        height: 40, // Фиксированная высота для каждого таба
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: Color.lerp(
-                                AppColors.getPrimaryBackground(context),
-                                AppColors.getSecondaryBackground(context),
-                                value,
-                              ) ??
+                            AppColors.getPrimaryBackground(context),
+                            AppColors.getSecondaryBackground(context),
+                            value,
+                          ) ??
                               AppColors.getPrimaryBackground(context),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Color.lerp(
-                                  AppColors.getDividedColor(context),
-                                  AppColors.getTertiaryBackground(context),
-                                  value,
-                                ) ??
+                              AppColors.getDividedColor(context),
+                              AppColors.getTertiaryBackground(context),
+                              value,
+                            ) ??
                                 AppColors.getDividedColor(context),
                             width: 1,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.tabs[index].emoji != null) ...[
+                        child: Center( // Центрируем содержимое по вертикали
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.tabs[index].emoji != null) ...[
+                                Text(
+                                  widget.tabs[index].emoji!,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1, // Убираем лишнее пространство у эмодзи
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
                               Text(
-                                widget.tabs[index].emoji!,
-                                style: const TextStyle(fontSize: 16),
+                                widget.tabs[index].title,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? AppColors.getPrimaryText(context)
+                                      : AppColors.getSecondaryText(context),
+                                  fontSize: 16,
+                                  height: 1, // Убираем лишнее пространство у текста
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  letterSpacing: 0.2,
+                                ),
                               ),
-                              const SizedBox(width: 8),
                             ],
-                            Text(
-                              widget.tabs[index].title,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? AppColors.getPrimaryText(context)
-                                    : AppColors.getSecondaryText(context),
-                                fontSize: 13,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     );
