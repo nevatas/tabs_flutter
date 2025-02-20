@@ -37,31 +37,11 @@ class _ChatScreenState extends State<ChatScreen>
       pageController: CustomPageController(),
     );
 
-    _focusNode.addListener(_onFocusChanged);
-
     _messageManager.initialize().then((_) {
       if (mounted) {
         setState(() {});
       }
     });
-  }
-
-  void _onFocusChanged() {
-    if (_focusNode.hasFocus) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final controller = _tabManager.scrollControllers[_tabManager.selectedTabIndex];
-        if (controller?.hasClients ?? false) {
-          final position = controller!.position;
-          if (position.pixels > position.maxScrollExtent - 300) {
-            controller.animateTo(
-              position.maxScrollExtent,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-        }
-      });
-    }
   }
 
   Future<void> _sendMessage() async {
@@ -76,16 +56,16 @@ class _ChatScreenState extends State<ChatScreen>
 
     _textController.clear();
     
-    // Сначала добавляем сообщение в список
+    // Добавляем сообщение (через MessageManager) в начало списка
     await _messageManager.sendMessage(message);
     setState(() {});
 
-    // Затем ждем следующего кадра для корректного скролла
+    // Скроллим к началу списка (для reverse: true это "вниз" на экране)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = _tabManager.scrollControllers[_tabManager.selectedTabIndex];
       if (controller?.hasClients ?? false) {
         controller!.animateTo(
-          controller.position.maxScrollExtent,
+          0, // при reverse: true, 0 = низ списка на экране
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -145,6 +125,7 @@ class _ChatScreenState extends State<ChatScreen>
     return ListView.builder(
       key: PageStorageKey(tabIndex),
       controller: _tabManager.scrollControllers[tabIndex],
+      reverse: true,
       padding: const EdgeInsets.only(
         left: 16,
         right: 16,
@@ -156,7 +137,7 @@ class _ChatScreenState extends State<ChatScreen>
       ),
       itemCount: messages.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
+        if (index == messages.length - 1) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -381,7 +362,6 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
     _textController.dispose();
     _tabManager.dispose();

@@ -18,7 +18,7 @@ class MessageManager {
   Future<void> sendMessage(Message message) async {
     await _storage.saveMessage(message);
     messagesByTabIndex[message.tabIndex] ??= [];
-    messagesByTabIndex[message.tabIndex]!.add(message);
+    messagesByTabIndex[message.tabIndex]!.insert(0, message);
   }
 
   Future<void> deleteMessage(Message message) async {
