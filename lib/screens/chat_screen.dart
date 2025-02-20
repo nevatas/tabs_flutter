@@ -156,6 +156,31 @@ class _ChatScreenState extends State<ChatScreen>
       ),
       itemCount: messages.length,
       itemBuilder: (context, index) {
+        if (index == 0) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 48),
+              MessageBubble(
+                message: messages[index],
+                isSelectionMode: _messageManager.isSelectionMode,
+                isSelected: _messageManager.selectedMessages.contains(messages[index]),
+                onLongPress: () {
+                  setState(() {
+                    _messageManager.toggleSelectionMode();
+                    _messageManager.toggleMessageSelection(messages[index]);
+                  });
+                },
+                onSelect: () {
+                  setState(() {
+                    _messageManager.toggleMessageSelection(messages[index]);
+                  });
+                },
+              ),
+            ],
+          );
+        }
+
         return MessageBubble(
           message: messages[index],
           isSelectionMode: _messageManager.isSelectionMode,
