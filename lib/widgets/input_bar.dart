@@ -84,10 +84,8 @@ class _InputBarState extends State<InputBar> {
         ],
       ),
       child: AnimatedCrossFade(
-        duration: const Duration(milliseconds: 300),
-        crossFadeState: widget.isSelectionMode
-            ? CrossFadeState.showFirst
-            : CrossFadeState.showSecond,
+        duration: const Duration(milliseconds: 200),
+        crossFadeState: widget.isSelectionMode ? CrossFadeState.showFirst : CrossFadeState.showSecond,
         firstChild: Container(
           decoration: BoxDecoration(
             color: AppColors.getSecondaryBackground(context),
@@ -112,31 +110,32 @@ class _InputBarState extends State<InputBar> {
                 ),
               ),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Row(
-                  children: [
-                    PopupMenuButton<int>(
-                      itemBuilder: (context) => List.generate(
-                        widget.tabManager.tabs.length,
-                        (index) => PopupMenuItem(
-                          value: index,
-                          child: Text(widget.tabManager.tabs[index].title),
-                        ),
-                      ),
-                      onSelected: widget.onMove,
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.delete),
-                      onPressed: widget.onDelete,
-                      color: AppColors.getPrimaryText(context),
-                      iconSize: 20,
-                    ),
-                  ],
-                ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.delete),
+                onPressed: widget.onDelete,
+                color: AppColors.getPrimaryText(context),
+                iconSize: 24,
               ),
+              const SizedBox(width: 8),
+              // Padding(
+              //   padding: const EdgeInsets.only(right: 16),
+              //   child: Row(
+              //     children: [
+              //       // PopupMenuButton<int>(
+              //       //   itemBuilder: (context) => List.generate(
+              //       //     widget.tabManager.tabs.length,
+              //       //     (index) => PopupMenuItem(
+              //       //       value: index,
+              //       //       child: Text(widget.tabManager.tabs[index].title),
+              //       //     ),
+              //       //   ),
+              //       //   onSelected: widget.onMove,
+              //       // ),
+
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -149,49 +148,38 @@ class _InputBarState extends State<InputBar> {
               width: 1,
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: TextField(
-                  controller: widget.controller,
-                  focusNode: widget.focusNode,
-                  textCapitalization: TextCapitalization.sentences,
-                  maxLines: 5,
-                  minLines: 1,
-                  style: TextStyle(
-                    color: AppColors.getPrimaryText(context),
-                    fontSize: 17,
+              TextField(
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 5,
+                minLines: 1,
+                style: TextStyle(
+                  color: AppColors.getPrimaryText(context),
+                  fontSize: 17,
+                  letterSpacing: 0.2,
+                ),
+                decoration: InputDecoration(
+                  hintText: widget.hintText,
+                  hintStyle: TextStyle(
+                    color: AppColors.getSecondaryText(context),
                     letterSpacing: 0.2,
                   ),
-                  decoration: InputDecoration(
-                    hintText: widget.hintText,
-                    hintStyle: TextStyle(
-                      color: AppColors.getSecondaryText(context),
-                      letterSpacing: 0.2,
-                    ),
-                    isDense: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => widget.onSendPressed(),
+                  contentPadding: EdgeInsets.only(left: 16, right: 16 + 32),
+                  border: InputBorder.none,
                 ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => widget.onSendPressed(),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    _AttachButton(
-                      onPressed: widget.onAttachPressed,
-                    ),
-                    const Spacer(),
-                    _SendButton(
-                      onPressed: widget.onSendPressed,
-                      isEnabled: !isTextEmpty,
-                    ),
-                  ],
+              Positioned(
+                right: 16,
+                bottom: 6,
+                child: _SendButton(
+                  onPressed: widget.onSendPressed,
+                  isEnabled: !isTextEmpty,
                 ),
               ),
             ],
@@ -202,44 +190,44 @@ class _InputBarState extends State<InputBar> {
   }
 }
 
-class _AttachButton extends StatelessWidget {
-  final VoidCallback onPressed;
+// class _AttachButton extends StatelessWidget {
+//   final VoidCallback onPressed;
 
-  const _AttachButton({
-    required this.onPressed,
-  });
+//   const _AttachButton({
+//     required this.onPressed,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppColors.getTertiaryBackground(context),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(41),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.add,
-            size: 20,
-            color: AppColors.getPrimaryText(context),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Material(
+//       color: Colors.transparent,
+//       child: InkWell(
+//         onTap: onPressed,
+//         borderRadius: BorderRadius.circular(16),
+//         child: Container(
+//           width: 32,
+//           height: 32,
+//           decoration: BoxDecoration(
+//             color: AppColors.getTertiaryBackground(context),
+//             borderRadius: BorderRadius.circular(16),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: Colors.black.withAlpha(41),
+//                 blurRadius: 2,
+//                 offset: const Offset(0, 1),
+//               ),
+//             ],
+//           ),
+//           child: Icon(
+//             Icons.add,
+//             size: 20,
+//             color: AppColors.getPrimaryText(context),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _SendButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -262,9 +250,7 @@ class _SendButton extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: isEnabled
-                ? AppColors.getAccentBackground(context)
-                : AppColors.getSecondaryText(context),
+            color: isEnabled ? AppColors.getAccentBackground(context) : AppColors.getSecondaryText(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
