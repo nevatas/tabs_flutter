@@ -21,10 +21,12 @@ class MessageManager {
     messagesByTabIndex[message.tabIndex]!.insert(0, message);
   }
 
-  Future<void> deleteMessage(Message message) async {
-    await _storage.deleteMessage(message);
-    messagesByTabIndex[message.tabIndex]?.remove(message);
-    selectedMessages.remove(message);
+  Future<void> deleteMessages(Set<Message> messages) async {
+    for (final message in messages) {
+      await _storage.deleteMessage(message);
+      messagesByTabIndex[message.tabIndex]?.remove(message);
+    }
+    selectedMessages.removeAll(messages);
   }
 
   Future<void> moveMessage(Message message, int newTabIndex) async {
@@ -35,7 +37,6 @@ class MessageManager {
     // Создаем новое сообщение с обновленным tabIndex
     final newMessage = Message(
       text: message.text,
-      isMe: message.isMe,
       timestamp: message.timestamp,
       tabIndex: newTabIndex,
     );

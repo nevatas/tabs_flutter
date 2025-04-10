@@ -34,7 +34,6 @@ class StorageService {
 ---
 timestamp: ${message.timestamp.toIso8601String()}
 tabIndex: ${message.tabIndex}
-isMe: ${message.isMe}
 ---
 
 ${message.text}
@@ -49,11 +48,7 @@ ${message.text}
     DateTime? before,
   }) async {
     final tabDir = await _getTabDir(tabIndex);
-    final files = await tabDir
-        .list()
-        .where((entity) =>
-            entity is File && path.extension(entity.path) == _extension)
-        .toList();
+    final files = await tabDir.list().where((entity) => entity is File && path.extension(entity.path) == _extension).toList();
 
     // Сортируем файлы по имени (timestamp) в обратном порядке
     files.sort((a, b) => b.path.compareTo(a.path));
@@ -93,7 +88,6 @@ ${message.text}
     // Создаем новое сообщение с обновленной категорией
     final newMessage = Message(
       text: message.text,
-      isMe: message.isMe,
       timestamp: message.timestamp,
       tabIndex: newTabIndex,
     );
@@ -124,7 +118,6 @@ ${message.text}
     // Парсим метаданные
     final metadata = parts[1].trim().split('\n');
     DateTime? timestamp;
-    bool isMe = false;
     int tabIndex = 0;
 
     for (final line in metadata) {
@@ -137,9 +130,6 @@ ${message.text}
       switch (key) {
         case 'timestamp':
           timestamp = DateTime.parse(value);
-          break;
-        case 'isMe':
-          isMe = value.toLowerCase() == 'true';
           break;
         case 'tabIndex':
           tabIndex = int.parse(value);
@@ -156,7 +146,6 @@ ${message.text}
 
     return Message(
       text: text,
-      isMe: isMe,
       timestamp: timestamp,
       tabIndex: tabIndex,
     );
@@ -172,8 +161,7 @@ ${message.text}
         .where((entity) =>
             entity is File &&
             path.extension(entity.path) == _extension &&
-            int.parse(path.basenameWithoutExtension(entity.path)) <
-                before.millisecondsSinceEpoch)
+            int.parse(path.basenameWithoutExtension(entity.path)) < before.millisecondsSinceEpoch)
         .toList();
 
     return files.isNotEmpty;

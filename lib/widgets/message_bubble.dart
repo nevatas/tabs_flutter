@@ -29,7 +29,7 @@ class MessageBubble extends StatelessWidget {
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (isSelectionMode)
                 AnimatedOpacity(
@@ -42,21 +42,18 @@ class MessageBubble extends StatelessWidget {
                     builder: (context, value, child) {
                       return Transform.scale(
                         scale: value,
+                        alignment: Alignment.center,
                         child: Container(
                           width: 24,
                           height: 24,
-                          margin: const EdgeInsets.only(right: 12, top: 8),
+                          margin: const EdgeInsets.only(right: 12),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected
-                                  ? AppColors.getAccentBackground(context)
-                                  : AppColors.getDividedColor(context),
+                              color: isSelected ? AppColors.getAccentBackground(context) : AppColors.getDividedColor(context),
                               width: 2,
                             ),
-                            color: isSelected
-                                ? AppColors.getAccentBackground(context)
-                                : Colors.transparent,
+                            color: isSelected ? AppColors.getAccentBackground(context) : Colors.transparent,
                           ),
                           child: isSelected
                               ? const Icon(
